@@ -1,0 +1,29 @@
+#gitignore for model script git repo\
+*.tif*
+*.asc*
+*.tfw
+*.docx
+*.pptx*
+*.xlsx
+/Stoc*
+bin/
+Debug/
+include/
+ipch/
+Win32/
+x64/
+Filzbach Examples.sdf
+Filzbach Examples.sln
+Filzbach Examples.suo
+Filzbach Examples.VC.db
+filzbach user gude v.1.1.pdf
+.DS_Store
+ReadMe_Filzbach_20110511.1.txt
+*.h
+*.vcxproj*
+win32/
+workspace/
+x64/
+.vs/
+*.Rhistory
+.directory
