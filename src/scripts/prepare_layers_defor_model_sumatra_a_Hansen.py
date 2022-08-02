@@ -749,17 +749,156 @@ mp.tif.write(out_path +"\\" + access_name + "_" + res + "m_repro_res.tif",
                          option='compress=deflate')
 
 #----------#
-# Land use + TORA #
+# Land use #
+# we are using hte 2010 layer, although that is outdated, 
+# but I need to get the layer on the road
 #----------#
 
+infile = r'N:\Landuse\Indonesia\Indonesia_legal_classification'
+    
+# reproject
+  
+mp.get_stdout("""ogr2ogr -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """ + 
+    infile + "\\processed\\Indonesia_legal_classification_repro.shp " + infile + "\\Indonesia_legal_classification.shp")
+
+mp.get_stdout("ogrinfo  -so -al "+   infile + "\\processed\\Indonesia_legal_classification_repro.shp ")
+
+"""    
+we will have classes (from state of forests)
+#1 - Non Forestland - Non-Protected Areas (APL) --> can be converted to agriculture, settlement etc. ,
+#2 - permanent production (HP) --> clear cutting and timber plantation,
+#2 - convertible production forest (HPK) --> clear cutting and ind plantation (or released to non-forest land),
+#3 - limited production forest (HTP) --> logging,
+#4 - protection forest (hutan lindung) -> protect buffer for water systems, flood prevention, erosion protection, etc.,
+#5 - conservation forest (hutan konservasi) -> particular characteristic and main function to protect biodiversity and ecosystem
+
+#4 and 5 will be lumped in image and model
+9 - other (water?) --> -9999
+-> first code 0-4 +1 because of the already existing nodata 0
+"""
+#os.system("ogrinfo  "+ infile[:-4] + "_repro.shp" + """ -sql "ALTER TABLE Indonesia_legal_classification_repro DROP COLUMN st_areasha" """)
+
+mp.get_stdout("ogrinfo  "+   infile + "\\processed\\Indonesia_legal_classification_repro.shp " + """ -sql "ALTER TABLE Indonesia_legal_classification_repro DROP COLUMN LU_id" """)
+
+
+
+source = ogr.Open( infile + "\\processed\\Indonesia_legal_classification_repro.shp" , update=True)
+layer = source.GetLayer()
+layer_defn = layer.GetLayerDefn()
+field_names = [layer_defn.GetFieldDefn(i).GetName() for i in range(layer_defn.GetFieldCount())]
+
+feature_count = layer.GetFeatureCount()
+feature_count = list(range(1, feature_count + 1) )
+
+# Add a new field
+
+field_defn = ogr.FieldDefn( "LU_id", ogr.OFTReal )
+layer.CreateField(field_defn)
+
+for i in layer:
+    kh_fungsi = i.GetField("kh_fungsi_")
+    if kh_fungsi == "APL":
+        i.SetField( "LU_id", 1) 
+     
+    if kh_fungsi == "HP":
+        i.SetField( "LU_id", 2)
+    if kh_fungsi == "HPK":
+        i.SetField( "LU_id", 2) 
+    if kh_fungsi == "HPT":
+        i.SetField( "LU_id", 3)  
+    if kh_fungsi == "HL":
+        i.SetField( "LU_id", 4)
+    if kh_fungsi  == "CA" or kh_fungsi == "HSAW" or kh_fungsi == "KSPA" or kh_fungsi == "SM" or kh_fungsi == "TN" or kh_fungsi == "TAHURA" or kh_fungsi == "TNL" or kh_fungsi == "TWA" or kh_fungsi == "TWA/HW" or kh_fungsi == "TWAL" or kh_fungsi == "TB":
+        i.SetField( "LU_id", 5)
+    if kh_fungsi != "HL" and kh_fungsi  != "CA" and kh_fungsi != "HSAW" and kh_fungsi != "KSPA" and kh_fungsi != "SM" and kh_fungsi != "TN" and kh_fungsi != "TAHURA" and kh_fungsi != "TNL" and kh_fungsi != "TWA" and kh_fungsi != "TWA/HW" and kh_fungsi != "TWAL" and kh_fungsi != "TB" and kh_fungsi != "APL" and kh_fungsi != "HP" and kh_fungsi != "HPK" and kh_fungsi != "HPT":
+        i.SetField( "LU_id", 9)   
+    layer.SetFeature(i)
+    
+source = None       
+
+# rasterize burning LU_id
+os.system("""gdal_rasterize -a_nodata 0 -a "LU_id" -l Indonesia_legal_classification_repro -tr """ + res + " -" + res +
+" -te " + extent +" "+ infile + "\\processed\\Indonesia_legal_classification_repro.shp " + 
+infile + "\\processed\\Indonesia_legal_classification_" + res + "m_repro_res.tif")
+
+# recode
+lu = mp.tif.read(infile + "\\processed\\Indonesia_legal_classification_" + res + "m_repro_res.tif", 1)
+# 0 becomes -9999, 0 becomes -9999, rest goes down 1
+lu = np.where((lu == 0) | (lu == 9) | (lu == -9999), -9999, lu-1)
+
+
+
+
+# clip landuse with forest extent (and island extent included)
+# I will also lump HL and CA --> 3 and 4
+np.unique(lu)
+lu =  np.where(lu == 4, 3, lu)
+lu =np.where(lu >= 0, lu + 1, lu)
+np.unique(lu)
+# this is the reference class
+lu = np.where(lu == 4, 0, lu)
+
+
+mp.tif.write(infile + "\\processed\\Indonesia_legal_classification_" + res + "m_repro_res.tif", 
+             out_path +  "\\lu_" + res + "m_repro_res.tif",
+                       lu,
+                       nodata = -9999, 
+                       option='compress=deflate')
+
+
+
+# final layer classes
+# 0 -PA + HL 
+# 1 - APL
+# 2 - Production forest
+# 3 - Limited production forestt 
+
+#----------#
+#PIAPS #
+# social forestry started in xxx
+# pray that I processed
+# that indonesia wide
+# the two layers are almost everywhere complimentary
+# so I am lumping them for now
+# no social forestry
+# proposed
+# implemented
+# use script C:/Users/mv296/work/Sumatra/deforestation_model/src/scripts/PIAPS_2020_processing_shapefiles.R
+
+#----------#
+
+piaps_path = r"N:/Landuse/Indonesia/PIAPS/PIAPS_Sept2020_Kraus/PIAPS_Sept2020_short_selected/piaps_combined.shp"
+
+# implemented - 1
+# proposed/available 2
+
+# reproject
+mp.get_stdout("ogrinfo -so -al "+ piaps_path )
+piaps_name = os.path.basename(piaps_path)[:-4]
+
+
+# reproject
+mp.get_stdout("""ogr2ogr -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs" """ + 
+ piaps_path[:-4] + "_repro.shp " +  piaps_path)
+
+mp.get_stdout("ogrinfo -so -al "+piaps_path[:-4] + "_repro.shp ")
+
+
+
+
+# rasterise
+
+mp.get_stdout(""" gdal_rasterize -a_nodata 0 -a status_id -l """ + piaps_name + "_repro " +
+                    "-tr " + res + " -" + res + " -te " + extent +" " + 
+                        piaps_path[:-4] + "_repro.shp " +
+                         piaps_path[:-4] + "_repro.tif")
 
 
 #----------#
-# PIAPS #
-#----------#
-
-
-
+# I thought about TORA
+# but it has only been implemented 2020/21
+# so not really a pattern there yet
+#-------------
 
 #--------------------------------------#
 # Smallholder vs industrial concession #
@@ -775,10 +914,10 @@ mp.tif.write(out_path +"\\" + access_name + "_" + res + "m_repro_res.tif",
 
 # set the extent
 #in_path = r''
-plantation_in_path = r'C:\Users\mv296\work\world\oil_palm_and_smallholder\High_resolution_global_industrial_and_smallholder_oil_palm_map_for_2019\oil_palm_map'
+plantation_in_path = r'N:\Landcover\world\oil_palm_and_smallholder\High_resolution_global_industrial_and_smallholder_oil_palm_map_for_2019\oil_palm_map'
+plantation_processed_path =  r'N:\Landcover\world\oil_palm_and_smallholder\High_resolution_global_industrial_and_smallholder_oil_palm_map_for_2019\processed'
 
-
-with open(r'C:\Users\mv296\work\Sumatra\deforestation_model\model_input\Sumatra_cells_plantation.csv', 'r') as read_obj: # read csv file as a list of lists
+with open(plantation_processed_path + '\\Sumatra_cells_plantation.csv', 'r') as read_obj: # read csv file as a list of lists
   csv_reader = csv.reader(read_obj) # pass the file object to reader() to get the reader object
   list_of_rows = list(csv_reader) # Pass reader object to list() to get a list of lists
 
@@ -796,25 +935,40 @@ for i in range(0, len(list_of_rows)):
 print(file_list)
 # split the list because as a whole seemingly too large
 file_list_a = file_list[0:round(len(file_list)/2)]
-file_list_b = file_list[round(len(file_list)/2)+1:len(file_list)]
+file_list_b = file_list[round(len(file_list)/2):len(file_list)+1]
+
+
+
 
 
 files_string_a = " ".join(file_list_a)
-command = "C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_merge.py -o " + out_path +"\\plantations_a.tif -of gtiff " + files_string_a
-mp.get_stdout(command)
+command_a = "C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_merge.py -o " + plantation_processed_path  +"\\plantations_a.tif -of gtiff " + files_string_a
+mp.get_stdout
+print(command_a)
 
 
 files_string_b = " ".join(file_list_b)
-command = "C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_merge.py -o " + out_path +"\\plantations_b.tif -of gtiff " + files_string_b
-mp.get_stdout(command)
+command_b = "C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_merge.py -o " + plantation_processed_path +"\\plantations_b.tif -of gtiff " + files_string_b
+mp.get_stdout
+print(command_b)
+
+
+# CONTINUE HERE!!!!!!
+
 
 # join the two
-command = "C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_merge.py -o " + out_path +"\\plantations.tif -of gtiff " + out_path +"\\plantations_a.tif " + out_path +"\\plantations_b.tif "
-mp.get_stdout(command)
+command = "C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_merge.py -n 0 -o " + plantation_processed_path +"\\plantations.tif -of gtiff " +plantation_processed_path +"\\plantations_a.tif " + plantation_processed_path +"\\plantations_b.tif "
+mp.get_stdout
+print(command)
 
 
 
 # then reproject 
+mp.get_stdout("gdalinfo "+ plantation_processed_path  +"\\plantations.tif")
+mp.get_stdout("""gdalwarp -r "near" -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """+
+        "-tr " + res + " -" + res + " -te " + extent + " "+
+        plantation_processed_path +"\\plantations.tif "+
+       out_path +"\\plantations_" + res + "m_repro_res.tif")
 
 # code 0 as NA!!!!
 
@@ -824,11 +978,86 @@ mp.get_stdout(command)
 
 
 #------------------------#
-# check infrastructure
-# check peat
-# Check mining, 
+# Peat
+# checked a layer from the government
+# both available through menlhk and from ministry of agriculture
+# but decided going with CRIS{}
+#---------------------# 
+
+
+peat_path = r'N:\Landcover\Indonesia\CRISP\CRISP_SEA_2015_deliverable'
+peat_name = 'Per-humid_SEA_LC_2015_CRISP_Geotiff_indexed_colour.tif'
+
+# reproject first
+mp.get_stdout("""gdalwarp -r "near" -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """+
+        "-tr " + res + " -" + res + " -te " + extent + " "+
+        peat_path  + "\\" + peat_name + " " +
+        peat_path  + "\\processed\\" + peat_name[:-4] +"_" + res + "m_repro_res.tif")
+        
+# import
+
+
+peat = mp.tif.read(peat_path  + "\\processed\\" + peat_name[:-4] + "_repro.tif", 1)
+
+np.unique(peat)
+# we are looking at 3, which is peatforest
+
+# recode 
+peat = np.where((peat == 3),1, 0)
+
+
+
+mp.tif.write( peat_path  + "\\processed\\" + peat_name[:-4] + "_repro.tif", 
+             out_path +  "\\peat_" + res + "m_repro_res.tif",
+                       peat,
+                       nodata = -9999,
+                       option='compress=deflate')
+
+
+# export
+
+
+#---------#
+# Mining
+#----------#
+mining_path  = r'N:\Landuse\Indonesia\WRI\Mining\processed\WRI_IUP_tambang_repro.shp'
+# this path is already reprojected and has the type info in column 'type'
+mp.get_stdout("ogrinfo  "+ mining_path + """ -sql "ALTER TABLE WRI_IUP_tambang_repro DROP COLUMN type_1 " """)
+
+
+#reproject
+mp.get_stdout("ogrinfo -so -al "+ mining_path  )
+
+
+# category 1
+# Eksplorasi   // Ekplorasi //  Eskplorasi  
+# Pencadangan Wilayah - regional backup
+# Studi Kelayakan - feasibility study
+# WIUPK:  Wiupk (Special Mining Business Licence Area (Wilayah Izin Usaha Pertambangan Khusus – “WIUPK”) means an area that is authorised to a Special Mining Business Licence holder.)
+        # An IUPK will be granted after the mining company has secured a WIUPK. IUPK holders are permitted to carry out mining activities only in the WIUPK. S
+
+#category 2
+# Konstruksi
+# Eksploitasi
+# Operasi Prodduksi //Operasi Produiksi    
+# Eksplorasi operasi Produksi 
+
+
+# rasterise
+
+mp.get_stdout(""" gdal_rasterize -a type -l WRI_IUP_tambang_repro """ +
+                    "-tr " + res + " -" + res + " -te " + extent +" " + 
+                        mining_path + " "+
+                        out_path + "\\mining_" + res + "m_repro_res.tif")
+
+
+
+
+
+########
 # check main commodity (!!!!!)
 # check transmigrant 
+# other podes things
 #------------------------#
 
 
