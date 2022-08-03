@@ -14,9 +14,7 @@ Script to prepare the predictor layers for Sumatra
 
 
 import numpy as np
-
 import os
-
 from osgeo import ogr
 
 
@@ -26,6 +24,20 @@ from glob import glob
 import csv
 from itertools import chain
 import math
+
+
+import pandas as pd
+import geopandas as gpd
+import shapely; shapely.speedups.disable()
+ 
+import rasterio
+from rasterio.plot import show
+from rasterio.plot import show_hist
+ 
+import rasterstats
+import matplotlib.pyplot as plt 
+ 
+
 
 import macpyver as mp
 
@@ -912,8 +924,6 @@ mp.get_stdout(""" gdal_rasterize -a_nodata 0 -a status_id -l """ + piaps_name + 
 # 3 - other land covers and/or uses that are not closed-canopy oil palm.
 #----------------------------------------#
 
-# set the extent
-#in_path = r''
 plantation_in_path = r'N:\Landcover\world\oil_palm_and_smallholder\High_resolution_global_industrial_and_smallholder_oil_palm_map_for_2019\oil_palm_map'
 plantation_processed_path =  r'N:\Landcover\world\oil_palm_and_smallholder\High_resolution_global_industrial_and_smallholder_oil_palm_map_for_2019\processed'
 
@@ -953,10 +963,8 @@ mp.get_stdout
 print(command_b)
 
 
-# CONTINUE HERE!!!!!!
-
-
 # join the two
+# the n 0 is important here, otherwise it will write over a few tiles wiht 0 info
 command = "C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_merge.py -n 0 -o " + plantation_processed_path +"\\plantations.tif -of gtiff " +plantation_processed_path +"\\plantations_a.tif " + plantation_processed_path +"\\plantations_b.tif "
 mp.get_stdout
 print(command)
@@ -973,7 +981,22 @@ mp.get_stdout("""gdalwarp -r "near" -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2
 # code 0 as NA!!!!
 
 
-# and use extent of base/forest
+
+plantation = mp.tif.read(out_path +"\\plantations_" + res + "m_repro_res.tif", 1)
+
+np.unique(plantation )
+# we are looking at 3, which is peatforest
+
+# recode 
+plantation  = np.where((plantation  == 0)|(plantation == 3),-9999, plantation)
+
+
+
+mp.tif.write(out_path +"\\plantations_" + res + "m_repro_res.tif", 
+             out_path +"\\plantations_" + res + "m_repro_res.tif",
+                       plantation,
+                       nodata = -9999,
+                       option='compress=deflate')
 
 
 
@@ -1027,7 +1050,7 @@ mp.get_stdout("ogrinfo  "+ mining_path + """ -sql "ALTER TABLE WRI_IUP_tambang_r
 
 #reproject
 mp.get_stdout("ogrinfo -so -al "+ mining_path  )
-
+# no need to reproject
 
 # category 1
 # Eksplorasi   // Ekplorasi //  Eskplorasi  
@@ -1054,8 +1077,274 @@ mp.get_stdout(""" gdal_rasterize -a type -l WRI_IUP_tambang_repro """ +
 
 
 
-########
-# check main commodity (!!!!!)
+
+#------------------------#
+
+# main commodity  from PODES
+# podes main commodity is first processed in  
+# src/scripts/prepare_podes_livelihood.R
+#------------------------#
+
+podes_in_path = r'N:/PODES_Boundaries/PODES_2018_boundaries/processed/Sumatra_PODES2018_livelihood.shp'
+
+# reproject
+mp.get_stdout("ogrinfo -so -al "+ podes_in_path )
+podes_name = os.path.basename(podes_in_path)[:-4]
+
+
+# reproject
+mp.get_stdout("""ogr2ogr -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs" """ + 
+podes_in_path[:-4] + "_repro.shp " +  podes_in_path)
+
+mp.get_stdout("ogrinfo -so -al "+podes_in_path[:-4] + "_repro.shp ")
+
+
+"""
+
+Lookup
+1 Rice
+2 Palawija (corn, beans, sweet potatoes)
+3 Horticulture (fruits, vegetables, ornamental plants, medicinal plants, etc.)
+4 Rubber
+5 Palm oil
+6 Coffee
+7 Cocoa
+8 Coconut
+9 Pepper
+10 Cloves
+11Tobacco
+12 Sugar cane
+13 Animal Husbandry (cattle, sheep, chickens, etc.)
+14 Capture fisheries (including other biota)
+15 Aquaculture (including other biota)
+16 Forestry cultivation (teak, mahogany, sengon, bamboo, etc.)
+17 Collection of forest products (honey, agarwood, fruits, firewood, etc.)
+18 Capture of wild animals (pigs, partridges, deer, etc.)
+19 Captivity of wild animals / plants (arowana, crocodile, orchid, etc.)
+20 Agricultural services (hatchery, tractor rental, rattan, etc.)
+21 Other
+
+subsistence agriculture: Rice, Palawija, Coffee, Cocoa, Coconut, Pepper, Cloves, 
+Tobacco and Sugar cane)
+1, 2, 3, 6, 7,8,9,10,11, 12 | 4 and 5 only outside APL
+Plantation agriculture: Rubber, Palm oil, and forest culivataion as main commoditiy were 
+ grouped in plantation category. 
+ 
+Non agriculture: All other main commodities (horticulture, animal husbandry, capture fisheries,
+ aquaculture, collection of forest products, capture of wild animals, 
+ captivity of wild animals and agricultural services) 
+ 
+ # then all non-forest pixels with these categories get filtered out and all
+ # forest pixels get a distance to these non-forest pixels (polygonize and then 
+ distance function)
+ 
+#
+to figure out whether rubber is subsistence or plantation
+# we extract the majority of landuse in a desa
+#
+"""
+desa = gpd.read_file(podes_in_path[:-4] + "_repro.shp")
+
+lu = rasterio.open(out_path +  "\\lu_" + res + "m_repro_res.tif", mode = "r")
+
+# desas as shapefile
+
+# extract majority lu
+
+# write back into shapefile, check kba script for how to do that
+
+
+# spatial statistics part
+# assign values of raster into numpy nd array
+lu_array = lu.read(1)
+affine = lu.transform # if I want to get metadate from forest_year, that is datatype, crs etc
+ 
+# Calculate the zonal statistics
+majority_lu = rasterstats.zonal_stats(desa, lu_array, affine = affine,
+                                      stats = "majority",
+                                      geojson_out = True, 
+                                      nodata = -9999,
+                                      all_touched = True # this is important because otherwise a lot of pixels empty
+                                         )
+    
+# majority_lu[19686]['properties']
+
+majority_lu_extract = []
+i = 0
+
+while i < len(majority_lu):
+    majority_lu_extract.append(majority_lu[i]['properties'])
+    i = i+1
+
+majority_lu_extract_df = pd.DataFrame.from_records(majority_lu_extract)
+print(majority_lu_extract_df)
+
+
+mp.get_stdout("ogrinfo  "+   podes_in_path[:-4] + "_repro.shp"+ """ -sql "ALTER TABLE Sumatra_PODES2018_livelihood_repro DROP COLUMN major_lu" """)
+mp.get_stdout("ogrinfo  -so -al "+   podes_in_path[:-4] + "_repro.shp")
+
+source = ogr.Open(podes_in_path[:-4] + "_repro.shp", update=True) # there is a shapefile inside here
+layer = source.GetLayer()
+layer_defn = layer.GetLayerDefn()
+field_names = [layer_defn.GetFieldDefn(i).GetName() for i in range(layer_defn.GetFieldCount())]
+
+feature_count = layer.GetFeatureCount()
+feature_count = list(range(1, feature_count + 1) )
+
+# Add a new field
+
+
+field_defn = ogr.FieldDefn( "major_lu", ogr.OFTReal )
+layer.CreateField(field_defn)
+counter = 0
+for i in layer:
+    print(counter)
+    layer.SetFeature(i)
+    i.SetField( "major_lu",  majority_lu_extract_df['majority'][counter])
+    layer.SetFeature(i)        
+    print(majority_lu_extract_df['majority'][counter])
+ 
+
+
+field_defn = ogr.FieldDefn( "livelihood_lu", ogr.OFTReal )
+layer.CreateField(field_defn)
+counter = 0
+for i in layer:
+    print(counter)
+    layer.SetFeature(i)
+# 
+    if  R403B == 4 and (major_lu == 1 or major_lu == 2):
+        i.SetField( "livelihood_lu", 5)
+   
+    layer.SetFeature(i)
+    counter = counter + 1
+
+
+        
+        
+    counter = counter + 1
+    
+    
+source = None  
+
+mp.get_stdout("ogrinfo  -so -al "+   podes_in_path[:-4] + "_repro.shp")
+
+
+# will the below work for dissolving?
+
+# test di
+
+
+
+
+# lookup
+# see R script plot_PODES_livelihood_types
+
+subsistence = [1, 2, 6, 7, 8, 9, 10, 11, 12]
+plantations =  [4, 5, 16]
+non_agri = [3, 13, 17, 18, 19, 20, 21] 
+fisheries = [14, 15]
+
+# fisheries: captuer fishieries, aquaculture: 14, 15   ? 
+
+# rename coconut
+PODES_join_reclas = PODES_join
+for i in range(0,len(subsistence)):
+        print(i)
+        PODES_join_reclas = np.where(PODES_join_reclas == subsistence[i], 
+                                     100, PODES_join_reclas)
+        print(len(plantations) > i)   
+        if len(plantations) > i:
+            PODES_join_reclas = np.where(PODES_join_reclas == plantations[i], 
+                                     200, PODES_join_reclas)
+        print(len(non_agri) > i)
+        if len(non_agri) > i:
+            PODES_join_reclas = np.where(PODES_join_reclas == non_agri[i], 
+                                         300, PODES_join_reclas)
+        print(len(fisheries) > i)
+        if len(fisheries) > i:
+            PODES_join_reclas = np.where(PODES_join_reclas == fisheries[i], 
+                                         400, PODES_join_reclas)                             
+
+
+# differentiate between 0 and NA, although if a desa has no livelihood it wil still have a distance
+
+
+mp.tif.write(base_path,
+                            out_path + "\\PODES_join_reclas_" + res + "m_repro_res.tif",
+                            PODES_join_reclas, dtype = 4, option='compress=deflate') 
+                            
+
+# filter out only non forest
+PODES_join_reclas_no_forest = np.where(forest_1 != 1, PODES_join_reclas, -9999)
+# 0 here means no forest and no podes
+mp.tif.write(base_path,
+                            out_path + "\\PODES_join_reclas_no_forest_" + res + "m_repro_res.tif",
+                            PODES_join_reclas_no_forest, dtype = 1, nodata = -9999, option='compress=deflate') 
+
+
+
+# go through subsistence, plantation, non_agri and fisheries
+# we want the distance of non-forest pixels with a certain livelihood
+# for each forested pixel 
+
+livelihood_class = ["subsistence", "plantation", "non_agri", "fisheries"]
+livelihood_class_value = [100, 200, 300, 400]
+
+for i in range(0,len(livelihood_class)):
+    livelihood_layer = np.where(PODES_join_reclas_no_forest == livelihood_class_value[i], 1, -9999)
+    mp.tif.write(base_path,
+                            out_path + "\\" + livelihood_class[i]+
+                            "_" + res + "m_repro_res.tif",
+                            livelihood_layer, dtype = 1, 
+                            nodata = -9999, option='compress=deflate') 
+    # gdal proximity.py
+    os.system("gdal_proximity.py -values 1 " + 
+    out_path + "\\" + livelihood_class[i] + "_" + res + "m_repro_res.tif " +
+    out_path + "\\" + livelihood_class[i] +"_" + res + "m_repro_res_distance.tif" ) 
+    # read
+    livelihood_distance = mp.tif.read(out_path + "\\" + livelihood_class[i] +"_" + res + "m_repro_res_distance.tif", 1)
+
+    # clip with forest    
+    livelihood_distance = np.where((forest_1 == -9999)|(base_map == 0) | 
+                                    (livelihood_distance <0), -9999, livelihood_distance)
+    mp.tif.write(base_path,
+                            out_path + "\\" + livelihood_class[i]+
+                            "_distance_non_forest_" + res + "m_repro_res.tif",
+                            livelihood_distance, dtype = 1, 
+                            nodata = -9999, option='compress=deflate') 
+  
+                         
+
+
+
+
+
+
+
+
+
+###########################
+
+# rasterise
+mp.get_stdout(""" gdal_rasterize -a R403B -l """ + podes_name + "_repro " +
+                    "-tr " + res + " -" + res + " -te " + extent +" " + 
+                        podes_in_path[:-4] + "_repro.shp " +
+                         podes_in_path[:-4] + "_repro.tif")
+
+
+
+
+
+
+
+# additionally make layer with different livelihood classes that are categorical
+# CONTINUE HERE
+
+
+#----------#
+
+
 # check transmigrant 
 # other podes things
 #------------------------#
