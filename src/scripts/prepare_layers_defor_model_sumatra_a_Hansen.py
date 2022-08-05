@@ -1126,7 +1126,7 @@ Lookup
 
 subsistence agriculture: Rice, Palawija, Coffee, Cocoa, Coconut, Pepper, Cloves, 
 Tobacco and Sugar cane)
-1, 2, 3, 6, 7,8,9,10,11, 12 | 4 and 5 only outside APL
+
 Plantation agriculture: Rubber, Palm oil, and forest culivataion as main commoditiy were 
  grouped in plantation category. 
  
@@ -1143,98 +1143,14 @@ to figure out whether rubber is subsistence or plantation
 # we extract the majority of landuse in a desa
 #
 """
-desa = gpd.read_file(podes_in_path[:-4] + "_repro.shp")
-
-lu = rasterio.open(out_path +  "\\lu_" + res + "m_repro_res.tif", mode = "r")
-
-# desas as shapefile
-
-# extract majority lu
-
-# write back into shapefile, check kba script for how to do that
 
 
-# spatial statistics part
-# assign values of raster into numpy nd array
-lu_array = lu.read(1)
-affine = lu.transform # if I want to get metadate from forest_year, that is datatype, crs etc
- 
-# Calculate the zonal statistics
-majority_lu = rasterstats.zonal_stats(desa, lu_array, affine = affine,
-                                      stats = "majority",
-                                      geojson_out = True, 
-                                      nodata = -9999,
-                                      all_touched = True # this is important because otherwise a lot of pixels empty
-                                         )
-    
-# majority_lu[19686]['properties']
-
-majority_lu_extract = []
-i = 0
-
-while i < len(majority_lu):
-    majority_lu_extract.append(majority_lu[i]['properties'])
-    i = i+1
-
-majority_lu_extract_df = pd.DataFrame.from_records(majority_lu_extract)
-print(majority_lu_extract_df)
 
 
-mp.get_stdout("ogrinfo  "+   podes_in_path[:-4] + "_repro.shp"+ """ -sql "ALTER TABLE Sumatra_PODES2018_livelihood_repro DROP COLUMN major_lu" """)
-mp.get_stdout("ogrinfo  -so -al "+   podes_in_path[:-4] + "_repro.shp")
-
-source = ogr.Open(podes_in_path[:-4] + "_repro.shp", update=True) # there is a shapefile inside here
-layer = source.GetLayer()
-layer_defn = layer.GetLayerDefn()
-field_names = [layer_defn.GetFieldDefn(i).GetName() for i in range(layer_defn.GetFieldCount())]
-
-feature_count = layer.GetFeatureCount()
-feature_count = list(range(1, feature_count + 1) )
-
-# Add a new field
-
-
-field_defn = ogr.FieldDefn( "major_lu", ogr.OFTReal )
-layer.CreateField(field_defn)
-counter = 0
-for i in layer:
-    print(counter)
-    layer.SetFeature(i)
-    i.SetField( "major_lu",  majority_lu_extract_df['majority'][counter])
-    layer.SetFeature(i)        
-    print(majority_lu_extract_df['majority'][counter])
- 
-
-
-field_defn = ogr.FieldDefn( "livelihood_lu", ogr.OFTReal )
-layer.CreateField(field_defn)
-counter = 0
-for i in layer:
-    print(counter)
-    layer.SetFeature(i)
-# 
-    if  R403B == 4 and (major_lu == 1 or major_lu == 2):
-        i.SetField( "livelihood_lu", 5)
-   
-    layer.SetFeature(i)
-    counter = counter + 1
-
-
-        
-        
-    counter = counter + 1
-    
-    
-source = None  
-
-mp.get_stdout("ogrinfo  -so -al "+   podes_in_path[:-4] + "_repro.shp")
-
-
-# will the below work for dissolving?
-
-# test di
-
-
+mp.get_stdout(""" gdal_rasterize -a R403B -l Sumatra_PODES2018_livelihood_repro """ +
+                    "-tr " + res + " -" + res + " -te " + extent +" " + 
+                       podes_in_path[:-4] + "_repro.shp "+
+                        podes_in_path[:-4] + "_" + res + "m_repro_res.tif")
 
 
 # lookup
@@ -1242,164 +1158,99 @@ mp.get_stdout("ogrinfo  -so -al "+   podes_in_path[:-4] + "_repro.shp")
 
 subsistence = [1, 2, 6, 7, 8, 9, 10, 11, 12]
 plantations =  [4, 5, 16]
-non_agri = [3, 13, 17, 18, 19, 20, 21] 
-fisheries = [14, 15]
-
-# fisheries: captuer fishieries, aquaculture: 14, 15   ? 
-
-# rename coconut
-PODES_join_reclas = PODES_join
-for i in range(0,len(subsistence)):
-        print(i)
-        PODES_join_reclas = np.where(PODES_join_reclas == subsistence[i], 
-                                     100, PODES_join_reclas)
-        print(len(plantations) > i)   
-        if len(plantations) > i:
-            PODES_join_reclas = np.where(PODES_join_reclas == plantations[i], 
-                                     200, PODES_join_reclas)
-        print(len(non_agri) > i)
-        if len(non_agri) > i:
-            PODES_join_reclas = np.where(PODES_join_reclas == non_agri[i], 
-                                         300, PODES_join_reclas)
-        print(len(fisheries) > i)
-        if len(fisheries) > i:
-            PODES_join_reclas = np.where(PODES_join_reclas == fisheries[i], 
-                                         400, PODES_join_reclas)                             
+non_agri = [3, 13, 17, 18, 19, 20, 21, 14, 15] 
 
 
-# differentiate between 0 and NA, although if a desa has no livelihood it wil still have a distance
+# rasterize the layer and then np.where the aboe classes and
+
+livelihood = mp.tif.read(podes_in_path[:-4] + "_" + res + "m_repro_res.tif", 1)
+
+# make layers with each type
+
+livelihood_recode = np.where(np.isin(livelihood,subsistence), 100, livelihood )
+livelihood_recode = np.where(np.isin(livelihood_recode, plantations), 200, livelihood_recode )
+livelihood_recode = np.where(np.isin(livelihood_recode, non_agri), 300, livelihood_recode )
 
 
-mp.tif.write(base_path,
-                            out_path + "\\PODES_join_reclas_" + res + "m_repro_res.tif",
-                            PODES_join_reclas, dtype = 4, option='compress=deflate') 
-                            
-
-# filter out only non forest
-PODES_join_reclas_no_forest = np.where(forest_1 != 1, PODES_join_reclas, -9999)
-# 0 here means no forest and no podes
-mp.tif.write(base_path,
-                            out_path + "\\PODES_join_reclas_no_forest_" + res + "m_repro_res.tif",
-                            PODES_join_reclas_no_forest, dtype = 1, nodata = -9999, option='compress=deflate') 
+np.unique(livelihood_recode)
 
 
+mp.tif.write(  podes_in_path[:-4] + "_" + res + "m_repro_res.tif", 
+             out_path +"\\livelihood_recode_" + res + "m_repro_res.tif",
+                       livelihood_recode,
+                       nodata = 0,
+                       option='compress=deflate')
 
-# go through subsistence, plantation, non_agri and fisheries
+
+# additionally make layer with different livelihood classes that are categorical
+
+
+# go through subsistence, plantation, non_agri
 # we want the distance of non-forest pixels with a certain livelihood
 # for each forested pixel 
 
-livelihood_class = ["subsistence", "plantation", "non_agri", "fisheries"]
-livelihood_class_value = [100, 200, 300, 400]
+livelihood_class = ["subsistence", "plantation", "non_agri"]
+livelihood_class_value = [100, 200, 300,]
 
 for i in range(0,len(livelihood_class)):
-    livelihood_layer = np.where(PODES_join_reclas_no_forest == livelihood_class_value[i], 1, -9999)
-    mp.tif.write(base_path,
+    print(i)
+    livelihood_layer= np.where(livelihood_recode == livelihood_class_value[i], 1, -9999)
+    mp.tif.write(out_path +"\\livelihood_recode_" + res + "m_repro_res.tif",
                             out_path + "\\" + livelihood_class[i]+
                             "_" + res + "m_repro_res.tif",
                             livelihood_layer, dtype = 1, 
                             nodata = -9999, option='compress=deflate') 
     # gdal proximity.py
-    os.system("gdal_proximity.py -values 1 " + 
+    mp.get_stdout("""C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py -values 1 """ + 
     out_path + "\\" + livelihood_class[i] + "_" + res + "m_repro_res.tif " +
     out_path + "\\" + livelihood_class[i] +"_" + res + "m_repro_res_distance.tif" ) 
-    # read
-    livelihood_distance = mp.tif.read(out_path + "\\" + livelihood_class[i] +"_" + res + "m_repro_res_distance.tif", 1)
 
-    # clip with forest    
-    livelihood_distance = np.where((forest_1 == -9999)|(base_map == 0) | 
-                                    (livelihood_distance <0), -9999, livelihood_distance)
-    mp.tif.write(base_path,
-                            out_path + "\\" + livelihood_class[i]+
-                            "_distance_non_forest_" + res + "m_repro_res.tif",
-                            livelihood_distance, dtype = 1, 
-                            nodata = -9999, option='compress=deflate') 
-  
-                         
-
-
-
-
-
-
-
-
-
-###########################
-
-# rasterise
-mp.get_stdout(""" gdal_rasterize -a R403B -l """ + podes_name + "_repro " +
-                    "-tr " + res + " -" + res + " -te " + extent +" " + 
-                        podes_in_path[:-4] + "_repro.shp " +
-                         podes_in_path[:-4] + "_repro.tif")
-
-
-
-
-
-
-
-# additionally make layer with different livelihood classes that are categorical
-# CONTINUE HERE
 
 
 #----------#
-
-
-# check transmigrant 
-# other podes things
+# Transmigrant 
 #------------------------#
 
+# WORK WITH THE LANDCOVER FROM MEF TO FILTER OUT TRANSMIGRATION
+# reproject and bring it in, 
+# filter out category 20122
+# clip with forest 
+# distance? 
+
+LC_transmigrant_path = r'N:\Landcover\Indonesia\MoF_LandCover\2017\WRI_land_cover_2017.shp'
+LC_transmigrant_processed_path = r'N:\Landcover\Indonesia\MoF_LandCover\2017\processed\WRI_land_cover_2017.shp'
+
+# reproject 
+mp.get_stdout("""ogr2ogr -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """ + 
+    LC_transmigrant_processed_path[:-4] + "_repro.shp" + " " + LC_transmigrant_path)
+    
+mp.get_stdout("ogrinfo -so -al "+  LC_transmigrant_processed_path[:-4] + "_repro.shp")
+# raster
+
+# it can have information on transmigration in either LC15 or LC96, so rasterise both and then pu ttogether
+# eh need to have codes instead
 
 
-# clip with forest for all layers
+mp.get_stdout("gdal_rasterize -a_nodata 0 -a pl17_id -l WRI_land_cover_2017_repro -tr " + res + " -" + res + " -te " + extent +" "+ LC_transmigrant_processed_path[:-4] + "_repro.shp " + LC_transmigrant_processed_path[:-4] + "_"+ res + "_m_repro.tif")
 
 
 
-
-
-##################################################
-##################################################
-
-# Appendix
-
-
-# I first thought to use a combo of forest now and first year of defor
-# but I keep deciding that this is not a good approach because i dont know if there was 
-# regrowth in th emeantime
-
-# use a comination of undisturbed-degraded tropical moist forest + deforestation year (which is the first year a pixel was deforested)
-
-# 
-TMF_path = r'N:\Landcover\Sumatra\JRC_TMF'
-
-file_list = glob(TMF_path + '//JRC_TMF_UndisturbedDegradedForest_v1_1982_2021_ASI_ID*.tif')
-
-files_string = " ".join(file_list)
-
-command = workaround + "\gdal_merge.py -o "+ TMF_path+ "JRC_TMF_UndisturbedDegradedForest_v1_1982_2021.tif" + " -of gtiff " + files_string
-
-mp.get_stdout(command)
-
-# reproject
-
-mp.get_stdout("""gdalwarp -r "near" -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """+
-        "-tr " + res + " -" + res + " -te " + extent + " "+
-         TMF_path+ "JRC_TMF_UndisturbedDegradedForest_v1_1982_2021.tif" + " " +TMF_path+ "JRC_TMF_UndisturbedDegradedForest_v1_1982_2021_" + res + "m_repro_res.tif" )  
         
+LC_transmigrant = mp.tif.read(LC_transmigrant_processed_path[:-4] + "_"+ res + "_m_repro.tif", 1)
+np.unique(LC_transmigrant)
+LC_transmigrant = np.where(LC_transmigrant == 20122, 1, -9999)
+np.unique(LC_transmigrant)
 
 
-file_list = glob(TMF_path + '//JRC_TMF_DeforestationYear_INT_*.tif')
+# use the distance to non-forested AND forested transmigrant pixels
+    
+mp.tif.write(LC_transmigrant_processed_path[:-4] + "_"+ res + "_m_repro.tif",
+                          LC_transmigrant_processed_path[:-4] + "_recode_"+ res + "_m_repro.tif",
+                         LC_transmigrant, nodata=-9999, dtype = 0, option='compress=deflate')
+                         
+mp.get_stdout("C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py -values 1 " + 
+    LC_transmigrant_processed_path[:-4] + "_recode_"+ res + "_m_repro.tif " +
+    LC_transmigrant_processed_path[:-4] + "_distance_"+ res + "_m_repro.tif") 
 
-files_string = " ".join(file_list)
 
-command = workaround + "\gdal_merge.py -o "+ TMF_path+ "JRC_TMF_DeforestationYear.tif" + " -of gtiff " + files_string
-
-mp.get_stdout(command)
-
-
-# reproject
-
-mp.get_stdout("""gdalwarp -r "near" -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """+
-        "-tr " + res + " -" + res + " -te " + extent + " "+
-         TMF_path+ "JRC_TMF_DeforestationYear.tif" + " " +TMF_path+ "JRC_TMF_DeforestationYear_" + res + "m_repro_res.tif" )  
-        
+ 
