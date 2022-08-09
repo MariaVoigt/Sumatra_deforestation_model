@@ -262,7 +262,7 @@ forest_1 = np.where((forest_loss >= 17) & (forest_2000 == 1), 1, forest_1)
 forest_1 = np.where((base_map == 0), -9999, forest_1)
 
 mp.tif.write(base_path,
-                         out_path_forest + '/forest_2016_21_'+str(res) + 'm_repro_res.tif', 
+                         out_path_forest + '/forest_hansen_2017_21_'+str(res) + 'm_repro_res.tif', 
                             forest_1, nodata=-9999, option='compress=deflate')
                          
     # layer 2 (deforestation in 2016-2018)
@@ -271,7 +271,7 @@ forest_2 = np.where((forest_2 >= 17) & (forest_2000 == 1), 1, -9999)
 forest_2 = np.where((base_map == 0), -9999, forest_2)
 
 mp.tif.write(base_path,
-                             out_path_forest + '/deforestation_2016_21_'+str(res) + 'm_repro_res.tif',
+                             out_path_forest + '/deforestation_hansen_2017_21_'+str(res) + 'm_repro_res.tif',
                              forest_2, nodata=-9999, option='compress=deflate')
      
      
