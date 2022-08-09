@@ -439,16 +439,16 @@ mp.get_stdout("gdalinfo "+ dem_30m_out_path +"\\dem_30m.tif")
  # warp to 180 m, pay attention to reprojection
 mp.get_stdout("""gdalwarp -r "bilinear" -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """+
         "-tr " + res + " " + res + " -te " + extent +" "+
-       dem_30m_out_path +"\\dem_30m.tif " +  out_path_pred + "\\Sumatra_Elevation_" + res + "m_repro_res.tif" )  
+       dem_30m_out_path +"\\dem_30m.tif " +  out_path_pred + "\\Sumatra_elevation_" + res + "m_repro_res.tif" )  
         
-mp.get_stdout("gdalinfo "+ dem_30m_out_path + "\\Sumatra_Elevation_" + res + "m_repro_res.tif" )
+mp.get_stdout("gdalinfo "+ dem_30m_out_path + "\\Sumatra_elevation_" + res + "m_repro_res.tif" )
 
 
 # then let the slope function run
 
 # create slope map
 #https://gdal.org/programs/gdaldem.html
-mp.get_stdout("gdaldem slope -compute_edges -p " +  dem_30m_out_path + "\\Sumatra_Elevation_" + res + "m_repro_res.tif " + 
+mp.get_stdout("gdaldem slope -compute_edges -p " +  dem_30m_out_path + "\\Sumatra_elevation_" + res + "m_repro_res.tif " + 
           dem_30m_out_path + "\\Sumatra_slope_" + res + "m_repro_res.tif")
 
 # I can't see any voids here, but if there were I could fill them up with the 90 m?!
@@ -665,16 +665,13 @@ mp.get_stdout("gdalwarp -r max -overwrite "+
        road_processed_path + "\\" + road_name + "_" + res + "m_repro_res.tif")
      
 
-
-mp.get_stdout 
-# get this to run in anaconda, because it takes forever
-print("""C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py """ + 
-               road_processed_path + "\\" + road_name + "_30_m_repro.tif "  +
-               out_path_pred + "\\" + road_name + "_30_m_repro_distance.tif " +
+mp.get_stdout("""C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py """ + 
+              road_processed_path + "\\" + road_name + "_" + res + "m_repro_res.tif "  +
+               out_path_pred + "\\road_" + res + "m_repro_distance.tif " +
                " -nodata -9999 -distunits GEO """)
 
 
-
+# reproject to 180 m
 
 #----------#
 # Rivers
@@ -706,11 +703,9 @@ mp.get_stdout("gdalwarp -r max -overwrite "+
      
 
 
-mp.get_stdout 
-# get this to run in anaconda, because it takes forever
-print("""C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py """ + 
-               river_processed_path + "\\" + river_name + "_30_m_repro.tif "  +
-               out_path_pred + "\\" + river_name + "_30_m_repro_distance.tif " +
+mp.get_stdout("""C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py """ + 
+               river_processed_path + "\\" + river_name + "_" + res + "m_repro_res.tif "  +
+               out_path_pred + "\\river_" + res + "m_repro_distance.tif " +
                " -nodata -9999 -distunits GEO """)
 
 
@@ -744,15 +739,15 @@ access_name = os.path.basename(access_path)[:-4]
 mp.get_stdout("gdalwarp  -overwrite -r bilinear "+
         "-tr " + res + " -" + res + " -te " + extent +" "+ 
       access_path  + " "+
-       out_path_pred +"\\" + access_name + "_" + res + "m_repro_res.tif")
+       access_path[:-17] + access_name + "_" + res + "m_repro_res.tif")
 
-access = mp.tif.read(out_path_pred +"\\" + access_name + "_" + res + "m_repro_res.tif", 1)
+access = mp.tif.read(access_path[:-17] + access_name + "_" + res + "m_repro_res.tif", 1)
 np.min(access)
 np.max(access)
 
 access = np.where((access < 0), 10000, access) # setting the NA value to a value very high
 
-mp.tif.write(out_path_pred+"\\" + access_name + "_" + res + "m_repro_res.tif",
+mp.tif.write(access_path[:-17] + access_name + "_" + res + "m_repro_res.tif",
                      out_path_pred +"\\" + access_name + "_" + res + "m_repro_res_filled.tif",
                         access, 
                          nodata=-9999, 
@@ -973,24 +968,19 @@ mp.get_stdout("gdalinfo "+ plantation_processed_path  +"\\plantations.tif")
 mp.get_stdout("""gdalwarp -r "near" -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """+
         "-tr " + res + " -" + res + " -te " + extent + " "+
         plantation_processed_path +"\\plantations.tif "+
-       out_path_pred +"\\plantations_" + res + "m_repro_res.tif")
+        plantation_processed_path +"\\plantations_" + res + "m_repro_res.tif")
 
 # code 0 as NA!!!!
-
-
-
-plantation = mp.tif.read(out_path_pred +"\\plantations_" + res + "m_repro_res.tif", 1)
+plantation = mp.tif.read(plantation_processed_path +"\\plantations_" + res + "m_repro_res.tif", 1)
 
 np.unique(plantation )
-# we are looking at 3, which is peatforest
+
 
 # recode 
 plantation  = np.where((plantation  == 0)|(plantation == 3),-9999, plantation)
 
-
-
-mp.tif.write(out_path_pred +"\\plantations_" + res + "m_repro_res.tif", 
-             out_path_pred+"\\plantations_" + res + "m_repro_res.tif",
+mp.tif.write(plantation_processed_path +"\\plantations_" + res + "m_repro_res.tif", 
+            out_path_pred  +"\\plantations_" + res + "m_repro_res.tif",
                        plantation,
                        nodata = -9999,
                        option='compress=deflate')
@@ -1077,8 +1067,8 @@ mp.get_stdout(""" gdal_rasterize -a type -l WRI_IUP_tambang_repro """ +
 # src/scripts/prepare_podes_livelihood.R
 #------------------------#
 
-podes_in_path = r'N:/PODES_Boundaries/PODES_2018_boundaries/processed/Sumatra_PODES2018_livelihood.shp'
-
+podes_in_path = r'C:\Users\mv296\work\Sumatra\data\model_input\PODES_processed/Sumatra_PODES2018_livelihood.shp'
+podes_processed_path = r'C:\Users\mv296\work\Sumatra\data\model_input\PODES_processed'
 # reproject
 mp.get_stdout("ogrinfo -so -al "+ podes_in_path )
 podes_name = os.path.basename(podes_in_path)[:-4]
@@ -1168,7 +1158,7 @@ np.unique(livelihood_recode)
 
 
 mp.tif.write(  podes_in_path[:-4] + "_" + res + "m_repro_res.tif", 
-            out_path_pred +"\\livelihood_recode_" + res + "m_repro_res.tif",
+            podes_processed_path+"\\livelihood_recode_" + res + "m_repro_res.tif",
                        livelihood_recode,
                        nodata = 0,
                        option='compress=deflate')
@@ -1187,14 +1177,14 @@ livelihood_class_value = [100, 200, 300,]
 for i in range(0,len(livelihood_class)):
     print(i)
     livelihood_layer= np.where(livelihood_recode == livelihood_class_value[i], 1, -9999)
-    mp.tif.write(out_path_pred+"\\livelihood_recode_" + res + "m_repro_res.tif",
-                          out_path_pred + "\\" + livelihood_class[i]+
+    mp.tif.write(podes_processed_path+"\\livelihood_recode_" + res + "m_repro_res.tif",
+                          podes_processed_path + "\\" + livelihood_class[i]+
                             "_" + res + "m_repro_res.tif",
                             livelihood_layer, dtype = 1, 
                             nodata = -9999, option='compress=deflate') 
     # gdal proximity.py
     mp.get_stdout("""C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py -values 1 """ + 
-    out_path_pred + "\\" + livelihood_class[i] + "_" + res + "m_repro_res.tif " +
+    podes_processed_path + "\\" + livelihood_class[i] + "_" + res + "m_repro_res.tif " +
     out_path_pred + "\\" + livelihood_class[i] +"_" + res + "m_repro_res_distance.tif" ) 
 
 

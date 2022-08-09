@@ -4,7 +4,11 @@ Created on Fri Apr 12 12:18:44 2019
 
 @author: mv39zilo
 
-# prepares predictors for sites
+# prepares predictors
+
+# first filter the forest and basemap
+# then filter for provinces
+# also think about border regions this time
 """
 
 import numpy as np
@@ -15,7 +19,7 @@ from glob import glob
 import subprocess
 import math
 
-import MacPyver as mp
+import macpyver as mp
 
 
 def compare(rast_path_1, rast_path_2):
@@ -29,9 +33,9 @@ def compare(rast_path_1, rast_path_2):
     if rast1_ext.left != rast2_ext.left:
         error = True
     if error:
-        return 'files are not matching'
+        return('files are not matching')
     else:
-        print 'alles ist gut'
+        print('alles ist gut')
         
 def after(value, a): # from here https://www.dotnetperls.com/between-before-after-python
     # Find and validate first part.
@@ -62,7 +66,43 @@ m2_km2 = 0.000001
 res = str(180)
 res_f = float(res)
 
-#ATTENTION ATTENTION ATTENTION
+
+
+# read all files in, check what is in the output folder
+# then np where with basemap
+# then np where with forest, here split hansen and jrc forest
+
+####
+##  continue here!!!
+##
+forest_layers = ["tmf", "hansen"]
+
+
+in_path_forest = r'C:\Users\mv296\work\Sumatra\data\model_input\repro_res\forest'
+
+in_path_base = r'C:\Users\mv296\work\Sumatra\data\model_input\repro_res\base'
+
+
+in_path_pred = r'C:\Users\mv296\work\Sumatra\data\model_input\repro_res\predictors'
+
+pred_list = glob(in_path_pred + "//*.tif")
+
+
+for forest_layer in forest_layers:
+    print(forest_layer)
+    for pred in pred_list:
+       print(os.path.basename(pred))
+       # 
+       pred = mp.tif.read(pred, 1)
+       pred =  np.where((base_map == 0), -9999, pred)
+       pred = np.where(forest_1 == -9999, -9999, pred)
+       mp.tif.write(...,
+                    outpath-to-new-out-folder,
+                    pred, 
+                    ...)
+
+
+
 
 # make the regions based on this file
 # 'C:\\Users\\mv296\\work\\Sumatra\\data\\gadm\\sumatra_complete_shape_repro.shp

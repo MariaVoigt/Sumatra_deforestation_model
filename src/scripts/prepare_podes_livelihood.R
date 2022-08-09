@@ -58,7 +58,7 @@ boundaries_data <- left_join(boundaries_data,livelihood_data, by = "ID")
 summary(boundaries_data)
 boundaries@data <- boundaries_data
 
-writeOGR(boundaries, dsn = "N:/PODES_Boundaries/PODES_2018_boundaries/processed", 
+writeOGR(boundaries, dsn = "C:/Users/mv296/work/Sumatra/data/model_input/PODES_processed", 
          layer = "Sumatra_PODES2018_livelihood", driver = "ESRI Shapefile", overwrite_layer = T)
 
 #convert livelihood_data into long
