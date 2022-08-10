@@ -78,11 +78,10 @@ forest_loss = mp.tif.read(out_path + "\\Hansen_GFC-2021-v1.9_lossyear_"+ res + "
 unit_filter = str("NAME_1 LIKE '%Aceh%' OR NAME_1 LIKE '%Sumatera%'  OR NAME_1 LIKE '%Jambi%' OR NAME_1 LIKE '%Bengkulu%' OR NAME_1 LIKE '%Bangka Belitung%' OR NAME_1 LIKE '%Lampung%'  OR NAME_1 LIKE '%Riau%' AND NAME_1 NOT LIKE '%Kepulauan Riau%'")
 
 # i am excluding  OR NAME_1 LIKE '%Kepulauan Riau%' because it includes islands in the West of Sarawak and is just a bit messy
-gadm_path = r'C:\Users\mv296\work\Indonesia\gadm\gadm36_IDN_1\gadm36_IDN_1.shp'              
-sumatra_shape_path = r'C:\Users\mv296\work\Sumatra\data\gadm\sumatra_complete_shape.shp'        
+gadm_path = r'N:\Admin_boundaries\GADM\Asia\gadm36_IDN_shp\gadm36_IDN_1.shp'              
+sumatra_shape_path = r'N:\Admin_boundaries\GADM\Sumatra\sumatra_complete_shape.shp'        
     
-mp.get_stdout
-print("""ogr2ogr  -overwrite -a_srs "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" -s_srs "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" -sql "SELECT * FROM  gadm36_IDN_1 WHERE """+ unit_filter  + """ " """ + sumatra_shape_path + " " + gadm_path)
+mp.get_stdout("""ogr2ogr  -overwrite -a_srs "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" -s_srs "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" -sql "SELECT * FROM  gadm36_IDN_1 WHERE """+ unit_filter  + """ " """ + sumatra_shape_path + " " + gadm_path)
 
 sumatra_basename = os.path.basename(sumatra_shape_path)[:-4]
 
@@ -110,7 +109,7 @@ base_map = mp.tif.read(base_path, 1)
 
 # outer shape (digitized in ArcGIS for clipping and others)
 
-outer_base_shape = r'C:\Users\mv296\work\Sumatra\data\Sumatra_outer_shape\Sumatra_outer_shape.shp'
+outer_base_shape = r'N:\Admin_boundaries\GADM\Sumatra\Sumatra_outer_shape.shp'
 
 
 #--------#
@@ -125,7 +124,7 @@ primary_processed_path = r'N:\Landcover\Indonesia\Margono_primary_forest_change\
 
 mp.get_stdout("""gdalwarp -r "near" -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """+
         "-tr " + res + " -" + res + " -te " + extent +
-        r" C:\Users\mv296\work\Indonesia\data\Margono_primary_forest_change\timeseq_change00_12.tif"  + " " + primary_processed_path + "//timeseq_change00_12_" + res + "m_repro_res.tif" )  
+        r" N:\Landcover\Indonesia\Margono_primary_forest_change\timeseq_change00_12.tif"  + " " + primary_processed_path + "//timeseq_change00_12_" + res + "m_repro_res.tif" )  
         
 # recode
 primary = mp.tif.read(primary_processed_path + "\\timeseq_change00_12_" + res + "m_repro_res.tif", 1)
@@ -160,7 +159,7 @@ mp.get_stdout("gdal_rasterize -a_nodata 0 -burn 1 -l Mangroves_GMW_2016_v2_Sumat
 
 
 mangrove = mp.tif.read(mangrove_processed_path + "\\" + "GMW_2016_v2_"+ res + "_m_repro.tif", 1)
-primary = np.where((primary == 1) | (mangrove == 1), 1, -9999)
+primary = np.where((primary == 1), 1, -9999)
 
 
 
@@ -168,9 +167,9 @@ primary = np.where((primary == 1) | (mangrove == 1), 1, -9999)
 # forest_loss
 Hansen_forest_processed_path = r'N:\Landcover\Sumatra\Hansen_GFC-2021-v1.9\processed'
 
-forest_loss_path = r'C:\Users\mv296\work\Indonesia\deforestation\forest_loss_Hansen\v1.9\Hansen_GFC-2021-v1.9_lossyear.tif'
+forest_loss_path = r'N:\Landcover\Indonesia\Forest_Hansen\v1.9\Hansen_GFC-2021-v1.9_lossyear.tif'
 
-file_list = glob(r'C:\Users\mv296\work\Indonesia\deforestation\forest_loss_Hansen\v1.9\Hansen_GFC-2021-v1.9_lossyear*.tif')
+file_list = glob(r'N:\Landcover\Indonesia\Forest_Hansen\v1.9\Hansen_GFC-2021-v1.9_lossyear*.tif')
 
 files_string = " ".join(file_list)
 
@@ -186,15 +185,13 @@ mp.get_stdout("""gdalwarp -r "near" -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2
 
 
 
-
-
 # forest cover
 
 # forest cover
 # combining all of Indonesia, just because its easier
-forest_cover_path = r'C:\Users\mv296\work\Indonesia\deforestation\forest_loss_Hansen\v1.9\Hansen_GFC-2021-v1.9_treecover2000.tif'
+forest_cover_path = r'N:\Landcover\Indonesia\Forest_Hansen\v1.9\Hansen_GFC-2021-v1.9_treecover2000.tif'
 
-file_list = glob(r'C:\Users\mv296\work\Indonesia\deforestation\forest_loss_Hansen\v1.9\Hansen_GFC-2021-v1.9_treecover2000_*.tif')
+file_list = glob(r'N:\Landcover\Indonesia\Forest_Hansen\v1.9\Hansen_GFC-2021-v1.9_treecover2000_*.tif')
 
 files_string = " ".join(file_list)
 
@@ -240,8 +237,6 @@ mp.tif.write(Hansen_forest_processed_path + "\\Hansen_GFC-2021-v1.9_treecover200
 
 # prepare forest loss layers for model
 
-
-
 forest_2000 = mp.tif.read(Hansen_forest_processed_path + "\\tree_cover_repro_70_clip_" + res + "m_repro_res.tif", 1)
 forest_loss = mp.tif.read(Hansen_forest_processed_path + "\\Hansen_GFC-2021-v1.9_lossyear_"+ res + "m_repro_res.tif" , 1)
 np.unique(forest_loss)
@@ -253,7 +248,7 @@ base_map.shape == forest_2000.shape == forest_loss.shape
  # prepare two layers:
     # one is:  0 = previous deforestation, 1= forest, -9999 = sea, non-forest vegetation
     #  one is: -9999 = not deforested or not considered, 1 = forest converted to non-forest 
-#PROBLEM: IN NON PRIMARY FOREST THERE IS FOREST
+
 forest_1 = np.where((forest_2000 == 0), -9999, forest_2000)
     # this is previous deforestation
 forest_1 = np.where((forest_loss >= 1) & (forest_loss <= 16) & (forest_1 != -9999), 0, forest_1)
@@ -568,7 +563,7 @@ mp.get_stdout("""ogr2ogr -where "CONFIDENCE > 50" -overwrite """ + processed_pat
 
 mp.get_stdout("""ogr2ogr -where "CAST(ACQ_DATE as date) < CAST('2012/01/20' as date)" -overwrite """ +  processed_path + "\\" + MODIS_name + "_filtered_date.shp "  +  processed_path + "\\" + MODIS_name + "_filtered.shp " )
 # test with 
-# modis <- read.dbf("C:\Users\mv296\work\Wallacea\deforestation_model\data/Fire/include_NusaTenggara/DL_FIRE_M6_103334/fire_archive_M6_103334_filtered_date.dbf")
+# modis <- read.dbf()
 # max(modis$ACQ_DATE) 
 # 
 # as.duration(( max(modis$ACQ_DATE) - min(modis$ACQ_DATE)))/dyears(1) # using package lubridate
@@ -1250,4 +1245,4 @@ mp.get_stdout("C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\
 
 
 # THE END
- 
+# continue in script C:\Users\mv296\work\Sumatra\deforestation_model\analysis\src\scripts\prepare_layers_defor_model_sumatra_units_b.py 
