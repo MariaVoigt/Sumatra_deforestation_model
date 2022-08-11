@@ -78,7 +78,7 @@ forest_loss = mp.tif.read(out_path + "\\Hansen_GFC-2021-v1.9_lossyear_"+ res + "
 unit_filter = str("NAME_1 LIKE '%Aceh%' OR NAME_1 LIKE '%Sumatera%'  OR NAME_1 LIKE '%Jambi%' OR NAME_1 LIKE '%Bengkulu%' OR NAME_1 LIKE '%Bangka Belitung%' OR NAME_1 LIKE '%Lampung%'  OR NAME_1 LIKE '%Riau%' AND NAME_1 NOT LIKE '%Kepulauan Riau%'")
 
 # i am excluding  OR NAME_1 LIKE '%Kepulauan Riau%' because it includes islands in the West of Sarawak and is just a bit messy
-gadm_path = r'N:\Admin_boundaries\GADM\Asia\gadm36_IDN_shp\gadm36_IDN_1.shp'              
+gadm_path = r'N:\Admin_boundaries\GADM\Asia\gadm41\gadm41_IDN_shp\gadm41_IDN_1.shp'              
 sumatra_shape_path = r'N:\Admin_boundaries\GADM\Sumatra\sumatra_complete_shape.shp'        
     
 mp.get_stdout("""ogr2ogr  -overwrite -a_srs "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" -s_srs "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" -sql "SELECT * FROM  gadm36_IDN_1 WHERE """+ unit_filter  + """ " """ + sumatra_shape_path + " " + gadm_path)
