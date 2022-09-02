@@ -7,6 +7,7 @@
 *.xlsx
 *.txt
 *.cpp
+*.prj
 /Stoc*
 bin/
 Debug/
