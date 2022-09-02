@@ -5,6 +5,8 @@
 *.docx
 *.pptx*
 *.xlsx
+*.txt
+*.cpp
 /Stoc*
 bin/
 Debug/
