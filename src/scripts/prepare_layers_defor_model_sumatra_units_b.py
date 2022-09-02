@@ -13,11 +13,7 @@ Created on Fri Apr 12 12:18:44 2019
 
 import numpy as np
 import os
-from osgeo import ogr
-import shutil
 from glob import glob
-import subprocess
-import math
 
 import macpyver as mp
 
@@ -89,9 +85,11 @@ units_path = r'C:\Users\mv296\work\Sumatra\data\model_input\units'
 forest_layer_types = ["tmf", "hansen"]
 years = "2017_21"
 res = str(180)
+predictor_pattern = "*soc_econMPI_180m_repro_res"
 
-pred_list = glob(in_path_pred + "//*.tif")
 
+pred_list = glob(in_path_pred + "//" + predictor_pattern + ".tif")
+print(pred_list)
 """
  we will subdivide Sumatra in a number of units that are managable at a high resolution
 
@@ -132,43 +130,8 @@ upper_right_forest_y = float([x.strip() for x in upper_right_forest.split(',')][
 
 
 # Clip forest layers with the basemap
-
-for forest_layer_type in forest_layer_types:
-    # forest_layer_type = forest_layer_types[0]
-    print(forest_layer_type)
-    # we need to clip the forest layers with base map as well
-    forest_1  = mp.tif.read(in_path_forest + "\\" + "forest_" + forest_layer_type + "_" + years + "_" + res + "m_repro_res.tif", 1)
-    forest_2  = mp.tif.read(in_path_forest + "\\" + "deforestation_" + forest_layer_type + "_" + years + "_" + res + "m_repro_res.tif", 1)
-
-    forest_1 =  np.where((base_map == 1), forest_1, -9999)
-    mp.tif.write(in_path_forest + "\\" + "forest_" + forest_layer_type + "_" + years + "_" + res + "m_repro_res.tif",
-                    out_path_pred  + "\\" + forest_layer_type + "\\" + "forest_" + years + "_" + res + "m_repro_res_"  + forest_layer_type +".tif",
-                    forest_1, 
-                    nodata = -9999, 
-                    option='compress=deflate')
-    
-    forest_2 =  np.where((base_map == 1), forest_2, -9999)
-    mp.tif.write(in_path_forest + "\\" + "deforestation_" + forest_layer_type + "_" + years + "_" + res + "m_repro_res.tif",
-                    out_path_pred  + "\\" + forest_layer_type + "\\" + "deforestation_"  + years + "_" + res + "m_repro_res_"  + forest_layer_type +".tif",
-                    forest_2, 
-                    nodata = -9999, 
-                    option='compress=deflate')
-
-    for pred in pred_list:
-     #pred = pred_list[0]
-       pred_name = os.path.basename(pred)[:-4]
-       print(pred_name)
-       pred_layer = mp.tif.read(pred, 1)
-       pred_layer = np.where(forest_1  == -9999, -9999, pred_layer)
-       mp.tif.write(pred,
-                    out_path_pred+ "\\" + forest_layer_type + "\\" + pred_name + "_" + forest_layer_type + ".tif",
-                    pred_layer, 
-                    nodata = -9999, 
-                    option='compress=deflate')
-
-# CONTINUE HERE INCLUDING FOREST IN PREDICTORS
-    
-#list_unit = list_units[4]
+   
+#list_unit = list_units[0]
 for list_unit in list_units:    
     print("starting units " + str(list_unit))
     mp.get_stdout("ogr2ogr -overwrite -where \"" + str(list_unit[0]) + """\" -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """ + units_path+ "//"+ str(list_unit[1]) + ".shp " + sumatra_shape_path)
@@ -230,8 +193,9 @@ for list_unit in list_units:
         out_path_asci = out_path_pred+ "\\" + forest_layer_type + "\\asci"
 
        # update pred list to include the two forest layers
-        pred_list = glob( out_path_pred+ "\\" + forest_layer_type + "//*.tif")
-
+        pred_list = glob( out_path_pred+ "\\" + forest_layer_type + "//" + predictor_pattern +"_"+  forest_layer_type+".tif")
+       # pred = out_path_pred+ "\\" + forest_layer_type + "//pressurelog10_sigma1_180m_repro_res_tmf.tif"
+        print(pred_list)
         #clip the predictors and convert to asci
         for pred in pred_list:
             #pred = pred_list[0]
@@ -239,18 +203,17 @@ for list_unit in list_units:
             print(pred_name)
             mp.get_stdout("gdalwarp -overwrite -dstNodata -9999  -tr " + res + " -" + res + 
             " -te "+ te_info_new   + " " +   
-            out_path_pred+ "\\" + forest_layer_type + "\\" + pred_name + "_" + forest_layer_type + ".tif " + 
+            pred + " " +
             out_path_units + '\\' + str(pred_name) +
-            "_" + str(list_unit[1])+  "_" + forest_layer_type + ".tif")  
+            "_" + str(list_unit[1])+  ".tif")  
             #read in,
-            pred_unit = mp.tif.read( out_path_units + '\\' + str(pred_name) +
-            "_" + str(list_unit[1])+  "_" + forest_layer_type + ".tif", 1) 
+            pred_unit = mp.tif.read(  out_path_units + '\\' + str(pred_name) +
+            "_" + str(list_unit[1])+  ".tif", 1) 
             pred_unit_cut = np.where(unit_delim == 1, pred_unit, -9999)
             mp.tif.write(ref_unit_path,
-                               out_path_units + '\\' + str(pred_name)+
-                               "_" + str(list_unit[1])+  "_" + forest_layer_type + "_cut.tif",
+                              out_path_units + '\\' + str(pred_name) +"_" + str(list_unit[1])+  "_cut.tif",
                                  pred_unit_cut, nodata=-9999, dtype = 4, option='compress=deflate')                         
             # translate to asci
-            mp.get_stdout("""gdal_translate -of "AAIGrid" -a_nodata -9999 """ +  out_path_units + "\\" + str(pred_name)+"_" + str(list_unit[1])+  "_" + forest_layer_type + "_cut.tif "+   out_path_asci + "\\" + str(pred_name)+ "_" + str(list_unit[1])+  "_" + forest_layer_type + ".ascii" )
+            mp.get_stdout("""gdal_translate -of "AAIGrid" -a_nodata -9999 """ +  out_path_units + '\\' + str(pred_name) +"_" + str(list_unit[1])+  "_cut.tif "+   out_path_asci + '\\' + str(pred_name) +"_" + str(list_unit[1])+  ".ascii" )
        
     
