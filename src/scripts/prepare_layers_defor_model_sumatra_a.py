@@ -49,14 +49,7 @@ workaround = r"C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\
 
 """
 # Run this if you want to jump in the middle of the script
-
 extent = "-3292738.004 962289.385 -1721878.004 2256489.385"
-base_map = mp.tif.read('C:\\Users\\mv296\\work\\Sumatra\\data\\model_input\\repro_res\\sumatra_complete_180_m_repro.tif', 1)
-
-
-forest_2000 = mp.tif.read(out_path + "\\tree_cover_repro_70_clip_" + res + "m_repro_res.tif", 1)
-forest_loss = mp.tif.read(out_path + "\\Hansen_GFC-2021-v1.9_lossyear_"+ res + "m_repro_res.tif" , 1)
-
 
 """
 
@@ -662,7 +655,7 @@ mp.get_stdout("gdalwarp -r max -overwrite "+
 
 mp.get_stdout("""C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py """ + 
               road_processed_path + "\\" + road_name + "_" + res + "m_repro_res.tif "  +
-               out_path_pred + "\\road_" + res + "m_repro_distance.tif " +
+               out_path_pred + "\\road_distance_" + res + "m_repro_res.tif " +
                " -nodata -9999 -distunits GEO """)
 
 
@@ -700,7 +693,7 @@ mp.get_stdout("gdalwarp -r max -overwrite "+
 
 mp.get_stdout("""C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py """ + 
                river_processed_path + "\\" + river_name + "_" + res + "m_repro_res.tif "  +
-               out_path_pred + "\\river_" + res + "m_repro_distance.tif " +
+               out_path_pred + "\\river_distance_" + res + "m_repro_res.tif " +
                " -nodata -9999 -distunits GEO """)
 
 
@@ -716,9 +709,9 @@ sigma_list = [1, 2, 5, 15, 25, 50]
 for sigma in sigma_list:
     print(sigma)
     mp.get_stdout("""gdalwarp -r near -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """+
-        "-tr " + res + " -" + res + " -te " + extent +" "+
+        "-tr " + res + " -" + res + " -te " + extent +" -dstnodata -9999 -overwrite "+
         pop_pressure_path + str(sigma) +  ".tif " + 
-       out_path_pred + "\\pressurelog10_sigma" + str(sigma) + "_" + res + "m_repro_res.tif")   
+       out_path_pred + "\\pressurelog10_sigma" + str(sigma) + "_" + res + "m_repro_res.tif")  
 
 
 
@@ -740,10 +733,12 @@ access = mp.tif.read(access_path[:-17] + access_name + "_" + res + "m_repro_res.
 np.min(access)
 np.max(access)
 
-access = np.where((access < 0), 10000, access) # setting the NA value to a value very high
+access = np.where((access < 0), 150, access) # setting the NA value to a value very high
+np.max(access)
+
 
 mp.tif.write(access_path[:-17] + access_name + "_" + res + "m_repro_res.tif",
-                     out_path_pred +"\\" + access_name + "_" + res + "m_repro_res_filled.tif",
+                     out_path_pred +"\\" + access_name + "_" + res + "m_repro_res.tif",
                         access, 
                          nodata=-9999, 
                          dtype = 4, 
@@ -755,14 +750,20 @@ mp.tif.write(access_path[:-17] + access_name + "_" + res + "m_repro_res.tif",
 # but I need to get the layer on the road
 #----------#
 
-infile = r'N:\Landuse\Indonesia\Indonesia_legal_classification'
+
+#-------------------------------------#
+# old school only used for comparison #
+#-------------------------------------#
+
+
+infile = r'N:\Landuse\Kalimantan_Sumatra'
     
 # reproject
   
 mp.get_stdout("""ogr2ogr -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """ + 
-    infile + "\\processed\\Indonesia_legal_classification_repro.shp " + infile + "\\Indonesia_legal_classification.shp")
+    infile + "\\processed\\Landuse_2015_outdated_repro.shp " + infile + "\\Landuse_2015.shp")
 
-mp.get_stdout("ogrinfo  -so -al "+   infile + "\\processed\\Indonesia_legal_classification_repro.shp ")
+mp.get_stdout("ogrinfo  -so -al "+   infile + "\\processed\\Landuse_2015_outdated_repro.shp ")
 
 """    
 we will have classes (from state of forests)
@@ -777,13 +778,13 @@ we will have classes (from state of forests)
 9 - other (water?) --> -9999
 -> first code 0-4 +1 because of the already existing nodata 0
 """
-#os.system("ogrinfo  "+ infile[:-4] + "_repro.shp" + """ -sql "ALTER TABLE Indonesia_legal_classification_repro DROP COLUMN st_areasha" """)
+#os.system("ogrinfo  "+ infile[:-4] + "_repro.shp" + """ -sql "ALTER TABLE Landuse_2015_repro DROP COLUMN st_areasha" """)
 
-mp.get_stdout("ogrinfo  "+   infile + "\\processed\\Indonesia_legal_classification_repro.shp " + """ -sql "ALTER TABLE Indonesia_legal_classification_repro DROP COLUMN LU_id" """)
+mp.get_stdout("ogrinfo  "+   infile + "\\processed\\Landuse_2015_outdated_repro.shp " + """ -sql "ALTER TABLE Landuse_2015_outdated_repro DROP COLUMN LU_id" """)
 
+mp.get_stdout("ogrinfo  -so -al "+   infile + "\\processed\\Landuse_2015_outdated_repro.shp ")
 
-
-source = ogr.Open( infile + "\\processed\\Indonesia_legal_classification_repro.shp" , update=True)
+source = ogr.Open( infile + "\\processed\\Landuse_2015_outdated_repro.shp" , update=True)
 layer = source.GetLayer()
 layer_defn = layer.GetLayerDefn()
 field_names = [layer_defn.GetFieldDefn(i).GetName() for i in range(layer_defn.GetFieldCount())]
@@ -797,10 +798,9 @@ field_defn = ogr.FieldDefn( "LU_id", ogr.OFTReal )
 layer.CreateField(field_defn)
 
 for i in layer:
-    kh_fungsi = i.GetField("kh_fungsi_")
+    kh_fungsi = i.GetField("Fungsi")
     if kh_fungsi == "APL":
         i.SetField( "LU_id", 1) 
-     
     if kh_fungsi == "HP":
         i.SetField( "LU_id", 2)
     if kh_fungsi == "HPK":
@@ -809,28 +809,31 @@ for i in layer:
         i.SetField( "LU_id", 3)  
     if kh_fungsi == "HL":
         i.SetField( "LU_id", 4)
-    if kh_fungsi  == "CA" or kh_fungsi == "HSAW" or kh_fungsi == "KSPA" or kh_fungsi == "SM" or kh_fungsi == "TN" or kh_fungsi == "TAHURA" or kh_fungsi == "TNL" or kh_fungsi == "TWA" or kh_fungsi == "TWA/HW" or kh_fungsi == "TWAL" or kh_fungsi == "TB":
+    if kh_fungsi  == "CA" or kh_fungsi == "HSAW" or kh_fungsi == "KSPA" or kh_fungsi == "SM" or kh_fungsi == "TN" or kh_fungsi == "TAHURA" or kh_fungsi == "TNL" or kh_fungsi == "TWA" or kh_fungsi == "TWA/HW" or kh_fungsi == "TWAL" or kh_fungsi == "TB" or kh_fungsi == "CAL" or kh_fungsi == "HSA" or kh_fungsi == "KSA" or kh_fungsi == "KSA/KPA" or kh_fungsi == "KSAL/KPAL" or kh_fungsi == "TNL" or kh_fungsi =="Tahura":
         i.SetField( "LU_id", 5)
-    if kh_fungsi != "HL" and kh_fungsi  != "CA" and kh_fungsi != "HSAW" and kh_fungsi != "KSPA" and kh_fungsi != "SM" and kh_fungsi != "TN" and kh_fungsi != "TAHURA" and kh_fungsi != "TNL" and kh_fungsi != "TWA" and kh_fungsi != "TWA/HW" and kh_fungsi != "TWAL" and kh_fungsi != "TB" and kh_fungsi != "APL" and kh_fungsi != "HP" and kh_fungsi != "HPK" and kh_fungsi != "HPT":
+   
+        
+        
+    if kh_fungsi != "HL" and kh_fungsi  != "CA" and kh_fungsi != "HSAW" and kh_fungsi != "KSPA" and kh_fungsi != "SM" and kh_fungsi != "TN" and kh_fungsi != "TAHURA" and kh_fungsi != "TNL" and kh_fungsi != "TWA" and kh_fungsi != "TWA/HW" and kh_fungsi != "TWAL" and kh_fungsi != "CAL" and kh_fungsi != "HSA" and kh_fungsi != "KSA" and kh_fungsi != "KSA/KPA" and kh_fungsi != "KSAL/KPAL" and kh_fungsi != "TNL" and kh_fungsi !="Tahura" and kh_fungsi != "TB" and kh_fungsi != "APL" and kh_fungsi != "HP" and kh_fungsi != "HPK" and kh_fungsi != "HPT":
         i.SetField( "LU_id", 9)   
     layer.SetFeature(i)
     
 source = None       
 
 # rasterize burning LU_id
-os.system("""gdal_rasterize -a_nodata 0 -a "LU_id" -l Indonesia_legal_classification_repro -tr """ + res + " -" + res +
-" -te " + extent +" "+ infile + "\\processed\\Indonesia_legal_classification_repro.shp " + 
-infile + "\\processed\\Indonesia_legal_classification_" + res + "m_repro_res.tif")
+os.system("""gdal_rasterize -a_nodata 0 -a "LU_id" -l Landuse_2015_outdated_repro -tr """ + res + " -" + res +
+" -te " + extent +" "+ infile + "\\processed\\Landuse_2015_outdated_repro.shp " + 
+infile + "\\processed\\Landuse_2015_outdated_" + res + "m_repro_res.tif")
 
 # recode
-lu = mp.tif.read(infile + "\\processed\\Indonesia_legal_classification_" + res + "m_repro_res.tif", 1)
+lu = mp.tif.read(infile + "\\processed\\Landuse_2015_outdated_" + res + "m_repro_res.tif", 1)
 # 0 becomes -9999, 0 becomes -9999, rest goes down 1
 lu = np.where((lu == 0) | (lu == 9) | (lu == -9999), -9999, lu-1)
 
 
 # clip landuse with forest extent (and island extent included)
-# I will also lump HL and CA --> 3 and 4
 np.unique(lu)
+# I will also lump HL and CA --> 3 and 4
 lu =  np.where(lu == 4, 3, lu)
 lu =np.where(lu >= 0, lu + 1, lu)
 np.unique(lu)
@@ -838,8 +841,8 @@ np.unique(lu)
 lu = np.where(lu == 4, 0, lu)
 
 
-mp.tif.write(infile + "\\processed\\Indonesia_legal_classification_" + res + "m_repro_res.tif", 
-             out_path_pred +  "\\lu_" + res + "m_repro_res.tif",
+mp.tif.write(infile + "\\processed\\Landuse_2015_outdated_" + res + "m_repro_res.tif", 
+             out_path_pred +  "\\lu_outdated_" + res + "m_repro_res.tif",
                        lu,
                        nodata = -9999, 
                        option='compress=deflate')
@@ -847,10 +850,166 @@ mp.tif.write(infile + "\\processed\\Indonesia_legal_classification_" + res + "m_
 
 
 # final layer classes
-# 0 -PA + HL 
-# 1 - APL
-# 2 - Production forest
-# 3 - Limited production forestt 
+# 0 -APL
+# 1 - Production forest
+# 2 - Limited production forestt 
+# 3 - PA and HL
+
+
+#------------#
+# right way  #
+# we are also now combining with WDPA (excluding marine and world heritage site)
+# where we use class 1 and 2 as strict
+# and the rest as not strict
+#------------#
+
+"""
+MARINE !=  2 
+IUCN_CAT = 1a 1b II
+
+DESIG = Ramsar Site, Wetland of International Importance
+World Heritage Site (natural or mixed)
+UNESCO-MAB Biosphere Reserve
+"""
+
+# this has been merged from the original and clipped for Sumatra in arcgis
+WDPA_path = r'N:\Conservation_boundaries\WDPA\Sumatra\WDPA_Feb2021_Sumatra.shp'
+WDPA_processed_path = r'N:\Conservation_boundaries\WDPA\Sumatra\processed'
+
+filter_string = str("( DESIG = 'Taman Nasional' OR (MARINE != '1' AND MARINE != '2' AND DESIG != 'Ramsar Site, Wetland of International Importance' AND DESIG != 'World Heritage Site (natural or mixed)' AND DESIG != 'UNESCO-MAB Biosphere Reserve' AND (IUCN_CAT = '1a' OR IUCN_CAT = '1b' OR IUCN_CAT = 'II')))" )
+
+mp.get_stdout("""ogr2ogr -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """ + 
+    WDPA_processed_path  + "//PAs_repro.shp " + WDPA_path)
+
+mp.get_stdout("""ogr2ogr  -overwrite -a_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" -sql "SELECT * FROM PAs_repro WHERE """+ filter_string  + """ " """ + WDPA_processed_path  + "//strict_PAs_repro.shp " + WDPA_processed_path  + "//PAs_repro.shp ")
+ 
+mp.get_stdout("ogrinfo -so -al "+ WDPA_processed_path  + "//strict_PAs_repro.shp " )
+
+# rasterize 
+mp.get_stdout("""gdal_rasterize -a_nodata 0 -burn 1 -l strict_PAs_repro -tr """ + res + " -" + res +
+" -te " + extent +" "+  WDPA_processed_path  + "//strict_PAs_repro.shp " + 
+ WDPA_processed_path  + "//strict_PAs_repro_res.tif " )
+
+
+
+
+#then redefine the landuse layer further downstream
+
+infile = r'N:\Landuse\Kalimantan_Sumatra'
+  
+# reproject
+  
+mp.get_stdout("""ogr2ogr -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """ + 
+    infile + "\\processed\\Landuse_2015_new_class.shp " + infile + "\\Landuse_2015.shp")
+
+mp.get_stdout("ogrinfo  -so -al "+    infile + "\\processed\\Landuse_2015_new_class.shp ")
+
+"""    
+we will have classes (from state of forests)
+
+# rewrite original values
+#1 - Non Forestland - Non-Protected Areas (APL) --> can be converted to agriculture, settlement etc. ,
+#2 - permanent production (HP) --> clear cutting and timber plantation,
+#2 - convertible production forest (HPK) --> clear cutting and ind plantation (or released to non-forest land),
+#3 - limited production forest (HTP) --> logging,
+#4 - protection forest (hutan lindung) -> protect buffer for water systems, flood prevention, erosion protection, etc.,
+#5 - conservation forest (hutan konservasi) -> particular characteristic and main function to protect biodiversity and ecosystem
+
+
+9 - other (water?) --> -9999
+
+"""
+
+mp.get_stdout("ogrinfo  "+   infile + "\\processed\\Landuse_2015_new_class.shp " + """ -sql "ALTER TABLE Landuse_2015_new_class DROP COLUMN LU_id" """)
+mp.get_stdout("ogrinfo  -so -al "+    infile + "\\processed\\Landuse_2015_new_class.shp ")
+
+
+#define lu classes
+# we are now using APL as a reference area as that will be present in every province
+# whereas TN won't
+
+protected = ["TN", "CA", "SM",  "TWA", "TB",  "CAL", "HSA", "KSA", 
+             "KSA/KPA", "KSAL/KPAL", "TNL", "TWA", "TWAL", "Tahura"] #
+HL = ["HL"] # weakest protection and management
+
+production = ["HP", "HPT"]
+
+conversion = ["HPK"]
+
+APL = ["APL"]
+
+other =  ["Tubuh Air", "Danau"]
+
+
+source = ogr.Open( infile + "\\processed\\Landuse_2015_new_class.shp" , update=True)
+layer = source.GetLayer()
+layer_defn = layer.GetLayerDefn()
+field_names = [layer_defn.GetFieldDefn(i).GetName() for i in range(layer_defn.GetFieldCount())]
+
+feature_count = layer.GetFeatureCount()
+feature_count = list(range(1, feature_count + 1) )
+
+# Add a new field
+
+field_defn = ogr.FieldDefn( "LU_id", ogr.OFTReal )
+layer.CreateField(field_defn)
+
+for i in layer:
+    kh_fungsi = i.GetField("Fungsi")
+    if np.isin(kh_fungsi, APL):
+        i.SetField( "LU_id", 1) 
+    if np.isin(kh_fungsi, protected):
+        i.SetField( "LU_id", 3) # leave 2 out because 2 will be strict and 3 less strict
+    if np.isin(kh_fungsi, HL):
+        i.SetField( "LU_id", 4)
+    if np.isin(kh_fungsi, production):
+        i.SetField( "LU_id", 5)
+    if np.isin(kh_fungsi, conversion):
+        i.SetField( "LU_id", 6)
+    if np.isin(kh_fungsi, other):
+        i.SetField( "LU_id", 7) 
+     
+    layer.SetFeature(i)
+ 
+source = None       
+
+# rasterize burning LU_id
+os.system("""gdal_rasterize -a_nodata 0 -a "LU_id" -l Landuse_2015_new_class -tr """ + res + " -" + res +
+" -te " + extent +" "+ infile + "\\processed\\Landuse_2015_new_class.shp " + 
+infile + "\\processed\\Landuse_2015_new_class_" + res + "m_repro_res.tif")
+
+# recode
+lu = mp.tif.read(infile + "\\processed\\Landuse_2015_new_class_" + res + "m_repro_res.tif", 1)
+np.unique(lu)
+
+# 0 becomes -9999, 0 becomes -9999, rest goes down 1
+lu = np.where( (lu == 0) | (lu == 7) | (lu == -9999), -9999, lu-1)
+
+
+np.unique(lu)
+
+# add the strict class
+PA_strict = mp.tif.read( WDPA_processed_path  + "//strict_PAs_repro_res.tif", 1)
+
+lu = np.where((lu == 2) & (PA_strict == 1),1, lu)
+np.unique(lu)
+
+mp.tif.write(infile + "\\processed\\Landuse_2015_new_class_" + res + "m_repro_res.tif", 
+             out_path_pred +  "\\lu_new_class_" + res + "m_repro_res.tif",
+                       lu,
+                       nodata = -9999, 
+                       option='compress=deflate')
+
+#FINAL LAYER DEFN
+
+# APL - 0 (reference layer)
+# strict protected (IUCN 1 and 2 in WDPA)- 1
+# other protected(IUCN further down and national) - 2
+# HL - 3
+# production ("HP","HPT")- 4
+# conversion (HPK) - 5
+# water and others - -9999 
+
 
 #----------#
 #PIAPS #
@@ -867,7 +1026,7 @@ mp.tif.write(infile + "\\processed\\Indonesia_legal_classification_" + res + "m_
 #----------#
 
 piaps_path = r"N:/Landuse/Indonesia/PIAPS/PIAPS_Sept2020_Kraus/PIAPS_Sept2020_short_selected/piaps_combined.shp"
-
+piaps_processed_path = r'N:\Landuse\Indonesia\PIAPS\PIAPS_Sept2020_Kraus\PIAPS_Sept2020_short_selected\processed'
 # implemented - 1
 # proposed/available 2
 
@@ -878,9 +1037,9 @@ piaps_name = os.path.basename(piaps_path)[:-4]
 
 # reproject
 mp.get_stdout("""ogr2ogr -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs" """ + 
- piaps_path[:-4] + "_repro.shp " +  piaps_path)
+              piaps_processed_path + "\\" + piaps_name + "_repro.shp " +  piaps_path)
 
-mp.get_stdout("ogrinfo -so -al "+piaps_path[:-4] + "_repro.shp ")
+mp.get_stdout("ogrinfo -so -al "+ piaps_processed_path + "\\" + piaps_name + "_repro.shp ")
 
 
 
@@ -889,8 +1048,28 @@ mp.get_stdout("ogrinfo -so -al "+piaps_path[:-4] + "_repro.shp ")
 
 mp.get_stdout(""" gdal_rasterize -a_nodata 0 -a status_id -l """ + piaps_name + "_repro " +
                     "-tr " + res + " -" + res + " -te " + extent +" " + 
-                        piaps_path[:-4] + "_repro.shp " +
-                         piaps_path[:-4] + "_repro.tif")
+                       piaps_processed_path + "\\" + piaps_name + "_repro.shp " +
+                        piaps_processed_path + "\\" + piaps_name +"_" + res + "m_repro_res.tif")
+# this is categorical predictor, so I have to code it
+
+piaps = mp.tif.read( piaps_processed_path + "\\" + piaps_name +"_" + res + "m_repro_res.tif", 1)
+
+np.unique(piaps)
+
+# 0 is everything else, that will be clipped with basemap
+# the reference is no piaps, i.e. 0
+# 1 is implemented
+# 2 proposed
+
+# write it out with NA value as -9999
+
+
+mp.tif.write( piaps_processed_path + "\\" + piaps_name +"_" + res + "m_repro_res.tif", 
+             out_path_pred +  "\\piaps_" + res + "m_repro_res.tif",
+                      piaps,
+                       nodata = -9999, 
+                       option='compress=deflate')
+
 
 
 #----------#
@@ -972,21 +1151,59 @@ np.unique(plantation )
 
 
 # recode 
-plantation  = np.where((plantation  == 0)|(plantation == 3),-9999, plantation)
+# 3 is within grid, outside of plantations
+# 0 is outside of grid
+plantation  = np.where((plantation  == 0),-9999, plantation)
+plantation  = np.where((plantation  == 3),0, plantation)
 
+# 0 is no plantation
+# 1 is industrial
+# 2 is smallholder
+
+# now we want to to distance to that 
 mp.tif.write(plantation_processed_path +"\\plantations_" + res + "m_repro_res.tif", 
-            out_path_pred  +"\\plantations_" + res + "m_repro_res.tif",
+           plantation_processed_path +"\\plantations_final_" + res + "m_repro_res.tif",
                        plantation,
                        nodata = -9999,
                        option='compress=deflate')
 
 
+ind_plantation = np.where((plantation  != 1), -9999, plantation)
+np.unique(ind_plantation)
+
+mp.tif.write(plantation_processed_path +"\\plantations_" + res + "m_repro_res.tif", 
+            plantation_processed_path +"\\ind_plantations_" + res + "m_repro_res.tif",
+                       ind_plantation,
+                       nodata = -9999,
+                       option='compress=deflate')
+
+# gdal proximity.py
+mp.get_stdout("""C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py -values 1 """ + 
+    plantation_processed_path +"\\ind_plantations_" + res + "m_repro_res.tif " +
+    out_path_pred + "\\ind_plantations_distance_" + res + "m_repro_res.tif" ) 
+
+
+
+small_plantation = np.where((plantation  != 2), -9999, 1)
+np.unique(small_plantation)
+
+
+mp.tif.write(plantation_processed_path +"\\plantations_" + res + "m_repro_res.tif", 
+            plantation_processed_path +"\\small_plantations_" + res + "m_repro_res.tif",
+                       small_plantation,
+                       nodata = -9999,
+                       option='compress=deflate')
+
+mp.get_stdout("""C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py -values 1 """ + 
+    plantation_processed_path +"\\small_plantations_" + res + "m_repro_res.tif " +
+    out_path_pred + "\\small_plantations_distance_" + res + "m_repro_res.tif" )
 
 #------------------------#
 # Peat
 # checked a layer from the government
 # both available through menlhk and from ministry of agriculture
 # but decided going with CRIS{}
+# I also want this as a proportion, so maybe do that while warping
 #---------------------# 
 
 
@@ -1166,7 +1383,7 @@ mp.tif.write(  podes_in_path[:-4] + "_" + res + "m_repro_res.tif",
 # we want the distance of non-forest pixels with a certain livelihood
 # for each forested pixel 
 
-livelihood_class = ["subsistence", "plantation", "non_agri"]
+livelihood_class = ["subsistence_LH", "plantation_LH", "non_agri_LH"]
 livelihood_class_value = [100, 200, 300,]
 
 for i in range(0,len(livelihood_class)):
@@ -1180,8 +1397,28 @@ for i in range(0,len(livelihood_class)):
     # gdal proximity.py
     mp.get_stdout("""C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py -values 1 """ + 
     podes_processed_path + "\\" + livelihood_class[i] + "_" + res + "m_repro_res.tif " +
-    out_path_pred + "\\" + livelihood_class[i] +"_" + res + "m_repro_res_distance.tif" ) 
+    out_path_pred + "\\" + livelihood_class[i] +"_distance_" + res + "m_repro_res.tif" ) 
 
+#----------#
+# Poverty (mpi without environment)
+#------------------------#
+
+
+# prepped the podes layer in C:/Users/mv296/work/Sumatra/deforestation_model/analysis/src/scripts/processing_deprivation_no_env.R
+
+mpi_path = r'C:\Users\mv296\work\Sumatra\data\model_input\PODES_processed\MPI_2018_sumatra.shp'
+mpi_basename = os.path.basename(mpi_path)[:-4]
+
+# reproject
+mp.get_stdout("""ogr2ogr -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs" """ + 
+              mpi_path[:-4]+ "_repro.shp " +  mpi_path)
+
+mp.get_stdout("ogrinfo -so -al "+mpi_path[:-4]+ "_repro.shp " )
+
+# fix this
+
+mp.get_stdout("""gdal_rasterize -a_nodata -9999 -a "MPInnv_" -l """ +mpi_basename +"_repro  -tr " + res + " -" + res +
+" -te " + extent +" "+   mpi_path[:-4]+ "_repro.shp " +      out_path_pred + "//soc_econMPI_"+ res + "m_repro_res.tif")
 
 
 #----------#
@@ -1221,12 +1458,12 @@ mp.get_stdout("ogrinfo -so -al "+  LC_transmigrant_processed_path[:-4] + "_repro
 # eh need to have codes instead
 
 
-mp.get_stdout("gdal_rasterize -a_nodata 0 -a PL_19_R -l land_cover_2019_repro -tr " + res + " -" + res + " -te " + extent +" "+ LC_transmigrant_processed_path[:-4] + "_repro.shp " + LC_transmigrant_processed_path[:-4] + "_"+ res + "_m_repro.tif")
+mp.get_stdout("gdal_rasterize -a_nodata 0 -a PL_19_R -l land_cover_2019_repro -tr " + res + " -" + res + " -te " + extent +" "+ LC_transmigrant_processed_path[:-4] + "_repro.shp " + LC_transmigrant_processed_path[:-4] + "_"+ res + "m_repro_res.tif")
 
 
 
         
-LC_transmigrant = mp.tif.read(LC_transmigrant_processed_path[:-4] + "_"+ res + "_m_repro.tif", 1)
+LC_transmigrant = mp.tif.read(LC_transmigrant_processed_path[:-4] + "_"+ res + "m_repro_res.tif", 1)
 np.unique(LC_transmigrant)
 LC_transmigrant = np.where(LC_transmigrant == 20122, 1, -9999)
 np.unique(LC_transmigrant)
@@ -1234,13 +1471,15 @@ np.unique(LC_transmigrant)
 
 # use the distance to non-forested AND forested transmigrant pixels
     
-mp.tif.write(LC_transmigrant_processed_path[:-4] + "_"+ res + "_m_repro.tif",
-                          LC_transmigrant_processed_path[:-4] + "_recode_"+ res + "_m_repro.tif",
+mp.tif.write(LC_transmigrant_processed_path[:-4] + "_"+ res + "m_repro.tif",
+                          LC_transmigrant_processed_path[:-4] + "_recode_"+ res + "m_repro_res.tif",
                          LC_transmigrant, nodata=-9999, dtype = 0, option='compress=deflate')
                          
 mp.get_stdout("C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py -values 1 " + 
-    LC_transmigrant_processed_path[:-4] + "_recode_"+ res + "_m_repro.tif " +
-    out_path_pred + "//transmigrant_distance_"+ res + "_m_repro.tif") 
+    LC_transmigrant_processed_path[:-4] + "_recode_"+ res + "m_repro.tif " +
+    out_path_pred + "//transmigrant_distance_"+ res + "m_repro_res.tif") 
+
+
 
 
 
