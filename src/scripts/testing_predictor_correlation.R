@@ -64,12 +64,13 @@ variable_names <- c(  "forest_2017_21",
 
 # 
 # unit <- unit_names[1]
-# forest_layer <- forest_layers[1]
+forest_layer <- "tmf"
+unit = "Bengkulu"
 # variable_names <- variable_names[c(2:3)]
 # variable <- variable_names[2]
 
-for (forest_layer in forest_layers) {
-  for (unit in unit_names) {
+#for (forest_layer in forest_layers) {
+#  for (unit in unit_names) {
     print(paste("Start unit ", unit, "at ", Sys.time()))
     in_path_unit <- file.path("C:/Users/mv296/work/Sumatra/data/model_input/repro_res/predictors_final", forest_layer , "asci")
     deforestation <-
@@ -147,8 +148,10 @@ for (forest_layer in forest_layers) {
           # -pressurelog10_sigma5,
           # -pressurelog10_sigma15,
           -pressurelog10_sigma50,
-          
-        #  -ind_plantations_distance,
+          -plantation_LH_distance ,
+         # -transmigrant_distance,
+        #-ind_plantations_distance,
+          -small_plantations_distance,
            # this doesnt exist in Aceh
         )      )
     
