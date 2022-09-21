@@ -250,7 +250,7 @@ forest_1 = np.where((forest_loss >= 17) & (forest_2000 == 1), 1, forest_1)
 forest_1 = np.where((base_map == 0), -9999, forest_1)
 
 mp.tif.write(base_path,
-                         out_path_forest + '/forest_hansen_2017_21_'+str(res) + 'm_repro_res.tif', 
+                         out_path_forest + '/forest_hansen_2016_21_'+str(res) + 'm_repro_res.tif', 
                             forest_1, nodata=-9999, option='compress=deflate')
                          
     # layer 2 (deforestation in 2016-2018)
@@ -327,14 +327,14 @@ forest_1990 = np.where((forest_1990 == 1) | (forest_1990 == 2), 1, 0)
 np.unique(forest_1990)
 
 
-forest_2017 = mp.tif.read(tmf_out_path+ "\\JRC_TMF_AnnualChange_v1_Sumatra_2017_"+ res + "m_repro_res.tif", 1)
-np.unique(forest_2017) 
-forest_2017 = np.where((forest_2017 == 1) | (forest_2017 == 2), 1, 0)
-np.unique(forest_2017) 
+forest_2016 = mp.tif.read(tmf_out_path+ "\\JRC_TMF_AnnualChange_v1_Sumatra_2016_"+ res + "m_repro_res.tif", 1)
+np.unique(forest_2016) 
+forest_2016 = np.where((forest_2016 == 1) | (forest_2016 == 2), 1, 0)
+np.unique(forest_2016) 
 
-forest_tmf_1 = np.where((forest_1990 == 1) & (forest_2017 == 0),0,-9999)
+forest_tmf_1 = np.where((forest_1990 == 1) & (forest_2016 == 0),0,-9999)
 
-forest_tmf_1 = np.where((forest_2017 == 1),1, forest_tmf_1)
+forest_tmf_1 = np.where((forest_2016 == 1),1, forest_tmf_1)
 
 forest_tmf_1  = np.where((base_map == 0), -9999, forest_tmf_1 )
 
