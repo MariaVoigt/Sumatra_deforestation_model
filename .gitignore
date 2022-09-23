@@ -6,7 +6,6 @@
 *.pptx*
 *.xlsx
 *.txt
-*.cpp
 *.prj
 /Stoc*
 bin/
@@ -16,7 +15,6 @@ ipch/
 Win32/
 x64/
 Filzbach Examples.sdf
-
 Filzbach Examples.suo
 Filzbach Examples.VC.db
 filzbach user gude v.1.1.pdf
