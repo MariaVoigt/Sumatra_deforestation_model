@@ -232,7 +232,7 @@ p1 <- ggplot(data = parameters_m_s_units ) + #
   theme_bw() +
   ylab("predictor coefficient") +
   xlab("predictors") +
-  
+  ggtitle(paste0("all predictors for ", forest_layer, " layer"))+
   theme(
     panel.grid.major.x = element_blank(),
     panel.grid.minor = element_blank(),
@@ -264,6 +264,7 @@ plot2 <-  ggplot(data = parameters_m_s_units_filter ) + #
   theme_bw() +
   ylab("predictor coefficient") +
   xlab("predictors") +
+  ggtitle(paste0("predictors with effect for ", forest_layer, " layer"))+
   
   theme(
     panel.grid.major.x = element_blank(),
