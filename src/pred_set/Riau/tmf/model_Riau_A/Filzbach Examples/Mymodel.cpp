@@ -764,9 +764,9 @@ void applyModel(int plookup)
 			  //EDIT
 
 			  //Exporting predicted probabilites to get AUC -- MARIA change xll yll corners
-			printf("\n Exporting predicted probabilities \n");
-			sprintf(fname, "E:/Sumatra_model_August22/tmf/Riau/model_Riau_A/predprob_yr%d_i%d.asc", n, j);
-			writeAsciiGrid(fname, predprob, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
+			//printf("\n Exporting predicted probabilities \n");
+			//sprintf(fname, "E:/Sumatra_model_August22/tmf/Riau/model_Riau_A/predprob_yr%d_i%d.asc", n, j);
+			//writeAsciiGrid(fname, predprob, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 			printf("\n deforest model, year %d", n);
 
@@ -775,9 +775,9 @@ void applyModel(int plookup)
 
 
 			//export the annual forest cover map as an ASCII file
-			printf("\n Exporting new forest cover map \n");
-			sprintf(fname, "E:/Sumatra_model_August22/tmf/Riau/model_Riau_A/predfor_i%d_%dyr.asc", j, n);
-			writeAsciiGrid(fname, modelForest, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
+			//printf("\n Exporting new forest cover map \n");
+			//sprintf(fname, "E:/Sumatra_model_August22/tmf/Riau/model_Riau_A/predfor_i%d_%dyr.asc", j, n);
+			//writeAsciiGrid(fname, modelForest, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 			//export the annual deforestation map as an ASCII file
 			printf("\n Exporting deforestation map for time %d \n", n);
@@ -1332,11 +1332,11 @@ int main()
 	tfree[9] = 1; //dist non-agri
 	tfree[10] = 0; //transmigrant
 	tfree[11] = 1; //dist industrial scale plant
-	tfree[12] = 0; //mpi
+	tfree[12] = 1; //mpi
 
 	tfree[13] = 1; //peat
 	tfree[14] = 1; //piaps
-	tfree[15] = 0; //mine
+	tfree[15] = 1; //mine
 	tfree[16] = 1; //landuse
 
 	setup_model();

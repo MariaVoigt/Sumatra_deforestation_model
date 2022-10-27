@@ -588,7 +588,7 @@ mp.tif.write(processed_path + "\\" + MODIS_name + "_filtered_date_repro.tif ",
 
 # I am resampling this with near, because I don't want interpolation of values
 # change resolution
-mp.get_stdout("gdalwarp -r near -overwrite "+
+mp.get_stdout("gdalwarp -r bilinear -overwrite "+
         "-tr " + res + " -" + res + " -te " + extent +" "+ 
         processed_path + "\\" + MODIS_name + "_filtered_date_yearly_average_repro.tif " + 
         processed_path + "\\" + MODIS_name + "_filtered_date_yearly_average_repro_" + res + "m_repro_res.tif")

@@ -250,7 +250,7 @@ forest_1 = np.where((forest_loss >= 17) & (forest_2000 == 1), 1, forest_1)
 forest_1 = np.where((base_map == 0), -9999, forest_1)
 
 mp.tif.write(base_path,
-                         out_path_forest + '/forest_hansen_2016_21_'+str(res) + 'm_repro_res.tif', 
+                         out_path_forest + '/forest_hansen_2017_21_'+str(res) + 'm_repro_res.tif', 
                             forest_1, nodata=-9999, option='compress=deflate')
                          
     # layer 2 (deforestation in 2016-2018)
@@ -327,14 +327,14 @@ forest_1990 = np.where((forest_1990 == 1) | (forest_1990 == 2), 1, 0)
 np.unique(forest_1990)
 
 
-forest_2016 = mp.tif.read(tmf_out_path+ "\\JRC_TMF_AnnualChange_v1_Sumatra_2016_"+ res + "m_repro_res.tif", 1)
-np.unique(forest_2016) 
-forest_2016 = np.where((forest_2016 == 1) | (forest_2016 == 2), 1, 0)
-np.unique(forest_2016) 
+forest_2017 = mp.tif.read(tmf_out_path+ "\\JRC_TMF_AnnualChange_v1_Sumatra_2017_"+ res + "m_repro_res.tif", 1)
+np.unique(forest_2017) 
+forest_2017 = np.where((forest_2017 == 1) | (forest_2017 == 2), 1, 0)
+np.unique(forest_2017) 
 
-forest_tmf_1 = np.where((forest_1990 == 1) & (forest_2016 == 0),0,-9999)
+forest_tmf_1 = np.where((forest_1990 == 1) & (forest_2017 == 0),0,-9999)
 
-forest_tmf_1 = np.where((forest_2016 == 1),1, forest_tmf_1)
+forest_tmf_1 = np.where((forest_2017 == 1),1, forest_tmf_1)
 
 forest_tmf_1  = np.where((base_map == 0), -9999, forest_tmf_1 )
 
@@ -588,7 +588,7 @@ mp.tif.write(processed_path + "\\" + MODIS_name + "_filtered_date_repro.tif ",
 
 # I am resampling this with near, because I don't want interpolation of values
 # change resolution
-mp.get_stdout("gdalwarp -r near -overwrite "+
+mp.get_stdout("gdalwarp -r bilinear -overwrite "+
         "-tr " + res + " -" + res + " -te " + extent +" "+ 
         processed_path + "\\" + MODIS_name + "_filtered_date_yearly_average_repro.tif " + 
         processed_path + "\\" + MODIS_name + "_filtered_date_yearly_average_repro_" + res + "m_repro_res.tif")
@@ -858,42 +858,9 @@ mp.tif.write(infile + "\\processed\\Landuse_2015_outdated_" + res + "m_repro_res
 
 #------------#
 # right way  #
-# we are also now combining with WDPA (excluding marine and world heritage site)
-# where we use class 1 and 2 as strict
-# and the rest as not strict
 #------------#
 
-"""
-MARINE !=  2 
-IUCN_CAT = 1a 1b II
 
-DESIG = Ramsar Site, Wetland of International Importance
-World Heritage Site (natural or mixed)
-UNESCO-MAB Biosphere Reserve
-"""
-
-# this has been merged from the original and clipped for Sumatra in arcgis
-WDPA_path = r'N:\Conservation_boundaries\WDPA\Sumatra\WDPA_Feb2021_Sumatra.shp'
-WDPA_processed_path = r'N:\Conservation_boundaries\WDPA\Sumatra\processed'
-
-filter_string = str("( DESIG = 'Taman Nasional' OR (MARINE != '1' AND MARINE != '2' AND DESIG != 'Ramsar Site, Wetland of International Importance' AND DESIG != 'World Heritage Site (natural or mixed)' AND DESIG != 'UNESCO-MAB Biosphere Reserve' AND (IUCN_CAT = '1a' OR IUCN_CAT = '1b' OR IUCN_CAT = 'II')))" )
-
-mp.get_stdout("""ogr2ogr -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """ + 
-    WDPA_processed_path  + "//PAs_repro.shp " + WDPA_path)
-
-mp.get_stdout("""ogr2ogr  -overwrite -a_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" -sql "SELECT * FROM PAs_repro WHERE """+ filter_string  + """ " """ + WDPA_processed_path  + "//strict_PAs_repro.shp " + WDPA_processed_path  + "//PAs_repro.shp ")
- 
-mp.get_stdout("ogrinfo -so -al "+ WDPA_processed_path  + "//strict_PAs_repro.shp " )
-
-# rasterize 
-mp.get_stdout("""gdal_rasterize -a_nodata 0 -burn 1 -l strict_PAs_repro -tr """ + res + " -" + res +
-" -te " + extent +" "+  WDPA_processed_path  + "//strict_PAs_repro.shp " + 
- WDPA_processed_path  + "//strict_PAs_repro_res.tif " )
-
-
-
-
-#then redefine the landuse layer further downstream
 
 infile = r'N:\Landuse\Kalimantan_Sumatra'
   
@@ -928,8 +895,9 @@ mp.get_stdout("ogrinfo  -so -al "+    infile + "\\processed\\Landuse_2015_new_cl
 # we are now using APL as a reference area as that will be present in every province
 # whereas TN won't
 
-protected = ["TN", "CA", "SM",  "TWA", "TB",  "CAL", "HSA", "KSA", 
-             "KSA/KPA", "KSAL/KPAL", "TNL", "TWA", "TWAL", "Tahura"] #
+protected_NP = ["TN"] # national park
+protected_other = ["CA", "SM",  "TWA", "TB",  "CAL", "HSA", "KSA", 
+             "KSA/KPA", "KSAL/KPAL", "TNL", "TWA", "TWAL", "Tahura"] # provincial protection classes
 HL = ["HL"] # weakest protection and management
 
 production = ["HP", "HPT"]
@@ -958,8 +926,10 @@ for i in layer:
     kh_fungsi = i.GetField("Fungsi")
     if np.isin(kh_fungsi, APL):
         i.SetField( "LU_id", 1) 
-    if np.isin(kh_fungsi, protected):
-        i.SetField( "LU_id", 3) # leave 2 out because 2 will be strict and 3 less strict
+    if np.isin(kh_fungsi, protected_NP):
+        i.SetField( "LU_id", 2) 
+    if np.isin(kh_fungsi, protected_other):
+        i.SetField( "LU_id", 3)
     if np.isin(kh_fungsi, HL):
         i.SetField( "LU_id", 4)
     if np.isin(kh_fungsi, production):
@@ -976,10 +946,10 @@ source = None
 # rasterize burning LU_id
 os.system("""gdal_rasterize -a_nodata 0 -a "LU_id" -l Landuse_2015_new_class -tr """ + res + " -" + res +
 " -te " + extent +" "+ infile + "\\processed\\Landuse_2015_new_class.shp " + 
-infile + "\\processed\\Landuse_2015_new_class_" + res + "m_repro_res.tif")
+infile + "\\processed\\Landuse_2015__new_class_" + res + "m_repro_res.tif")
 
 # recode
-lu = mp.tif.read(infile + "\\processed\\Landuse_2015_new_class_" + res + "m_repro_res.tif", 1)
+lu = mp.tif.read(infile + "\\processed\\Landuse_2015__new_class_" + res + "m_repro_res.tif", 1)
 np.unique(lu)
 
 # 0 becomes -9999, 0 becomes -9999, rest goes down 1
@@ -988,13 +958,8 @@ lu = np.where( (lu == 0) | (lu == 7) | (lu == -9999), -9999, lu-1)
 
 np.unique(lu)
 
-# add the strict class
-PA_strict = mp.tif.read( WDPA_processed_path  + "//strict_PAs_repro_res.tif", 1)
 
-lu = np.where((lu == 2) & (PA_strict == 1),1, lu)
-np.unique(lu)
-
-mp.tif.write(infile + "\\processed\\Landuse_2015_new_class_" + res + "m_repro_res.tif", 
+mp.tif.write(infile + "\\processed\\Landuse_2015__new_class_" + res + "m_repro_res.tif", 
              out_path_pred +  "\\lu_new_class_" + res + "m_repro_res.tif",
                        lu,
                        nodata = -9999, 
@@ -1003,8 +968,8 @@ mp.tif.write(infile + "\\processed\\Landuse_2015_new_class_" + res + "m_repro_re
 #FINAL LAYER DEFN
 
 # APL - 0 (reference layer)
-# strict protected (IUCN 1 and 2 in WDPA)- 1
-# other protected(IUCN further down and national) - 2
+# NP - 1
+# other protected - 2
 # HL - 3
 # production ("HP","HPT")- 4
 # conversion (HPK) - 5
@@ -1156,47 +1121,13 @@ np.unique(plantation )
 plantation  = np.where((plantation  == 0),-9999, plantation)
 plantation  = np.where((plantation  == 3),0, plantation)
 
-# 0 is no plantation
-# 1 is industrial
-# 2 is smallholder
-
-# now we want to to distance to that 
 mp.tif.write(plantation_processed_path +"\\plantations_" + res + "m_repro_res.tif", 
-           plantation_processed_path +"\\plantations_final_" + res + "m_repro_res.tif",
+            out_path_pred  +"\\plantations_" + res + "m_repro_res2.tif",
                        plantation,
                        nodata = -9999,
                        option='compress=deflate')
 
 
-ind_plantation = np.where((plantation  != 1), -9999, plantation)
-np.unique(ind_plantation)
-
-mp.tif.write(plantation_processed_path +"\\plantations_" + res + "m_repro_res.tif", 
-            plantation_processed_path +"\\ind_plantations_" + res + "m_repro_res.tif",
-                       ind_plantation,
-                       nodata = -9999,
-                       option='compress=deflate')
-
-# gdal proximity.py
-mp.get_stdout("""C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py -values 1 """ + 
-    plantation_processed_path +"\\ind_plantations_" + res + "m_repro_res.tif " +
-    out_path_pred + "\\ind_plantations_distance_" + res + "m_repro_res.tif" ) 
-
-
-
-small_plantation = np.where((plantation  != 2), -9999, 1)
-np.unique(small_plantation)
-
-
-mp.tif.write(plantation_processed_path +"\\plantations_" + res + "m_repro_res.tif", 
-            plantation_processed_path +"\\small_plantations_" + res + "m_repro_res.tif",
-                       small_plantation,
-                       nodata = -9999,
-                       option='compress=deflate')
-
-mp.get_stdout("""C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py -values 1 """ + 
-    plantation_processed_path +"\\small_plantations_" + res + "m_repro_res.tif " +
-    out_path_pred + "\\small_plantations_distance_" + res + "m_repro_res.tif" )
 
 #------------------------#
 # Peat
@@ -1399,26 +1330,6 @@ for i in range(0,len(livelihood_class)):
     podes_processed_path + "\\" + livelihood_class[i] + "_" + res + "m_repro_res.tif " +
     out_path_pred + "\\" + livelihood_class[i] +"_distance_" + res + "m_repro_res.tif" ) 
 
-#----------#
-# Poverty (mpi without environment)
-#------------------------#
-
-
-# prepped the podes layer in C:/Users/mv296/work/Sumatra/deforestation_model/analysis/src/scripts/processing_deprivation_no_env.R
-
-mpi_path = r'C:\Users\mv296\work\Sumatra\data\model_input\PODES_processed\MPI_2018_sumatra.shp'
-mpi_basename = os.path.basename(mpi_path)[:-4]
-
-# reproject
-mp.get_stdout("""ogr2ogr -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs" """ + 
-              mpi_path[:-4]+ "_repro.shp " +  mpi_path)
-
-mp.get_stdout("ogrinfo -so -al "+mpi_path[:-4]+ "_repro.shp " )
-
-# fix this
-
-mp.get_stdout("""gdal_rasterize -a_nodata -9999 -a "MPInnv_" -l """ +mpi_basename +"_repro  -tr " + res + " -" + res +
-" -te " + extent +" "+   mpi_path[:-4]+ "_repro.shp " +      out_path_pred + "//soc_econMPI_"+ res + "m_repro_res.tif")
 
 
 #----------#
@@ -1478,8 +1389,6 @@ mp.tif.write(LC_transmigrant_processed_path[:-4] + "_"+ res + "m_repro.tif",
 mp.get_stdout("C:\Anaconda3\envs\geo_py37\python.exe C:\Anaconda3\envs\geo_py37\Scripts\gdal_proximity.py -values 1 " + 
     LC_transmigrant_processed_path[:-4] + "_recode_"+ res + "m_repro.tif " +
     out_path_pred + "//transmigrant_distance_"+ res + "m_repro_res.tif") 
-
-
 
 
 

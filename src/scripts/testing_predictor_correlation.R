@@ -13,7 +13,7 @@ library(car)
 
 # Script to plot the rates of deforestation 
 #set working directory
-predictors_path <- 
+#predictors_path <- 
 in_path <- ("C:/Users/mv296/work/Sumatra/data/model_input/repro_res/predictors_final")
 outpath <- ("C:/Users/mv296/work/Sumatra/deforestation_model/results")
 options(scipen=999)
@@ -65,7 +65,7 @@ variable_names <- c(  "forest_2017_21",
 # 
 # unit <- unit_names[1]
 forest_layer <- "tmf"
-unit = "Bengkulu"
+unit = "Lampung"
 # variable_names <- variable_names[c(2:3)]
 # variable <- variable_names[2]
 
@@ -148,7 +148,7 @@ unit = "Bengkulu"
           # -pressurelog10_sigma5,
           # -pressurelog10_sigma15,
           -pressurelog10_sigma50,
-          -plantation_LH_distance ,
+        #  -plantation_LH_distance ,
          # -transmigrant_distance,
         #-ind_plantations_distance,
           -small_plantations_distance,
