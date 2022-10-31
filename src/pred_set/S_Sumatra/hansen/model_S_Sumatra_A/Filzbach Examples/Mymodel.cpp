@@ -758,9 +758,9 @@ void applyModel(int plookup)
 			  //EDIT
 
 			  //Exporting predicted probabilites to get AUC -- MARIA change xll yll corners
-			printf("\n Exporting predicted probabilities \n");
-			sprintf(fname, "M:/Sumatra_model_August22/hansen/S_Sumatra/model_Bengkulu_A/predprob_yr%d_i%d.asc", n, j);
-			writeAsciiGrid(fname, predprob, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
+			//printf("\n Exporting predicted probabilities \n");
+			//sprintf(fname, "M:/Sumatra_model_August22/hansen/S_Sumatra/model_Bengkulu_A/predprob_yr%d_i%d.asc", n, j);
+			//writeAsciiGrid(fname, predprob, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 			printf("\n deforest model, year %d", n);
 
@@ -769,9 +769,9 @@ void applyModel(int plookup)
 
 
 			//export the annual forest cover map as an ASCII file
-			printf("\n Exporting new forest cover map \n");
-			sprintf(fname, "M:/Sumatra_model_August22/hansen/S_Sumatra/model_Bengkulu_A/predfor_i%d_%dyr.asc", j, n);
-			writeAsciiGrid(fname, modelForest, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
+			//printf("\n Exporting new forest cover map \n");
+			//sprintf(fname, "M:/Sumatra_model_August22/hansen/S_Sumatra/model_Bengkulu_A/predfor_i%d_%dyr.asc", j, n);
+			//writeAsciiGrid(fname, modelForest, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 			//export the annual deforestation map as an ASCII file
 			printf("\n Exporting deforestation map for time %d \n", n);
@@ -814,18 +814,18 @@ void applyModel(int plookup)
 		table_writevalue("parameters", "gamlu_4", j, cv("gamma_lu", 4));
 
 		//Export forestdata table
-		sprintf(fname, "M:/Sumatra_model_August22/hansen/S_Sumatra/model_Sumatra_A/Model_35yrs_temp.txt");
+		sprintf(fname, "./workspace/Model_35yrs_temp.txt");
 		table_output("forestdata", fname);
 
 	} //End error propagation loop 
 
 	  //EDIT
 	  //Export forestdata table
-	sprintf(fname, "M:/Sumatra_model_August22/hansen/S_Sumatra/model_S_Sumatra_A/Model_35yrs.txt");
+	sprintf(fname, "./workspace/Model_35yrs.txt");
 	table_output("forestdata", fname);
 
 	//Export parameters table 
-	table_output("parameters", "M:/Sumatra_model_August22/hansen/S_Sumatra/model_S_Sumatra_A/Parameters_Values.txt");
+	table_output("parameters", "./workspace/Parameters_Values.txt");
 
 
 	return;

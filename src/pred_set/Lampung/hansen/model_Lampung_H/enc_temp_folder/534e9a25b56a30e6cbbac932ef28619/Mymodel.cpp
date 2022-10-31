@@ -36,11 +36,11 @@ void pause() { PAUSE }
 
 // Maria - change dimensions of input data
 
-//North Sumatra
-#define GRIDNX 2009
-#define GRIDNY 3082 // dimensions of grid we are using
-#define XLLCORNER -3020038.004000000190
-#define YLLCORNER  1538649.379999999888// coerner dimensions
+//Lampung
+#define GRIDNX 1559
+#define GRIDNY 1569 // dimensions of grid we are using
+#define XLLCORNER -2262058.004000000190
+#define YLLCORNER  962109.379999999888 // coerner dimensions
 
 
 #define CELLSIZE 180  //cellsize
@@ -53,13 +53,18 @@ float fire[GRIDNX][GRIDNY];			//fire
 float access_hrs[GRIDNX][GRIDNY];			//access in hrs
 float roads[GRIDNX][GRIDNY];			//roads distance in m
 float rivers[GRIDNX][GRIDNY];			//rivers distance in m
+
 float pp_1[GRIDNX][GRIDNY];			//pop pressure sigma 1
+
 float subsistenceLH[GRIDNX][GRIDNY];			//subsistence_distance_non_forest	
 float plantationLH[GRIDNX][GRIDNY];			//plantation_distance_non_forest
+float non_agriLH[GRIDNX][GRIDNY];			//non_agri_distance_non_forest
 float transmigrant[GRIDNX][GRIDNY];	    //LC_transmigrant_distance
+float ind_plantations[GRIDNX][GRIDNY];	    //distance to smallscale plantations
+float mpi[GRIDNX][GRIDNY];	    //mpi poverty economic
 
 float peat[GRIDNX][GRIDNY];			//peat, 2 levels, 0-1
-float plantations[GRIDNX][GRIDNY];	    //plantations, 3 levels 0-2
+float piaps[GRIDNX][GRIDNY];	    //social forestry, 3 levels, 0-2
 float mining[GRIDNX][GRIDNY];        //mining, 3 levels, 0-2
 float landuse[GRIDNX][GRIDNY];        //landuse, 5 levels,0 - 4 
 									 // 
@@ -81,11 +86,11 @@ int yval[GRIDNX * GRIDNY]; //vector to store sample columns ID
 						 // Maria - change here for the number of variables you have
 						 // IS THIS CORRECT THE 7 LEVELS OF GAMLU
 double mybeta_0, mybeta_1, mybeta_2, mybeta_3, mybeta_4, mybeta_5, mybeta_6, mybeta_7,
-mybeta_8, mybeta_9, mybeta_10, gampeat[1], gamplant[2], gammine[2], gamlu[3], myrho;
+mybeta_8, mybeta_9, mybeta_10, mybeta_11, mybeta_12, mybeta_13, gampeat[1], gampiaps[2], gammine[2], gamlu[5],  myrho;
 int beta0_global = 1;
 
 // Maria - change here for the total number of parameters
-int tfree[14]; // for stepwise regression, flag for whether parameters are currently free (1), or fixed at 0.0 (0) 
+int tfree[17]; // for stepwise regression, flag for whether parameters are currently free (1), or fixed at 0.0 (0) 
 
 			  //other global variables
 double training_likelihood, current_likelihood;
@@ -213,7 +218,7 @@ double get_pdefor(int xx, int yy, int datamod)
 
 	//function to get deforestation probability based on several ascii grids
 
-	double pdefor, k, mygamma_peat, mygamma_plant, mygamma_mine, mygamma_lu, mygamma_b0;
+	double pdefor, k, mygamma_peat, mygamma_piaps, mygamma_mine, mygamma_lu, mygamma_b0;
 	//xx, yy are the coordinates of the grid-cell
 	//datamod==0 means, get current pattern of forest, from our data grid
 	//datamod==1 means, get current pattern of forest, from our model grid
@@ -230,17 +235,15 @@ double get_pdefor(int xx, int yy, int datamod)
 		mygamma_peat = gampeat[(int)peat[xx][yy] - 1];
 	}
 
-
-	if (plantations[xx][yy] == 0)
+	if (piaps[xx][yy] == 0)
 	{
-		mygamma_plant = 0.0;
+		mygamma_piaps = 0.0;
 	}
 	else
 	{
 		// otherwise, get relevant parameter
-		mygamma_plant = gamplant[(int)plantations[xx][yy] - 1];
+		mygamma_piaps = gampiaps[(int)piaps[xx][yy] - 1];
 	}
-
 
 
 
@@ -280,10 +283,13 @@ double get_pdefor(int xx, int yy, int datamod)
 		mybeta_7 * pp_1[xx][yy] +
 		mybeta_8 * subsistenceLH[xx][yy] + 
 		mybeta_9 * plantationLH[xx][yy] +
-		mybeta_10 * transmigrant[xx][yy] +
+		mybeta_10 * non_agriLH[xx][yy] + 
+		mybeta_11 * transmigrant[xx][yy] +
+		mybeta_12 * ind_plantations[xx][yy] +
+		mybeta_13 * mpi[xx][yy] +
 
 		mygamma_peat * peat[xx][yy] +
-		mygamma_plant * plantations[xx][yy] +
+		mygamma_piaps * piaps[xx][yy] +
 		mygamma_mine * mining[xx][yy] +
 		mygamma_lu * landuse[xx][yy];
 
@@ -309,12 +315,15 @@ void get_params() //small trick to make the model faster
 	mybeta_8 = cv("beta_8");
 	mybeta_9 = cv("beta_9");
 	mybeta_10 = cv("beta_10");
+	mybeta_11 = cv("beta_11");
+	mybeta_12 = cv("beta_12");
+	mybeta_13 = cv("beta_13");
 
 	//categorical variable
 	gampeat[0] = cv("gamma_peat", 0);
 
-	gamplant[0] = cv("gamma_plant", 0);
-	gamplant[1] = cv("gamma_plant", 1);
+	gampiaps[0] = cv("gamma_piaps", 0);
+	gampiaps[1] = cv("gamma_piaps", 1);
 
 	gammine[0] = cv("gamma_mine", 0);
 	gammine[1] = cv("gamma_mine", 1);
@@ -322,6 +331,9 @@ void get_params() //small trick to make the model faster
 	gamlu[0] = cv("gamma_lu", 0);
 	gamlu[1] = cv("gamma_lu", 1);
 	gamlu[2] = cv("gamma_lu", 2);
+	gamlu[3] = cv("gamma_lu", 3);
+	gamlu[4] = cv("gamma_lu", 4);
+
 
 
 	// scale for nborhood
@@ -622,12 +634,14 @@ void applyModel(int plookup)
 		table_addcolumn("parameters", "beta_9");
 		table_addcolumn("parameters", "beta_10");
 		table_addcolumn("parameters", "beta_11");
+		table_addcolumn("parameters", "beta_12");
+		table_addcolumn("parameters", "beta_13");
+
 
 		table_addcolumn("parameters", "gampeat_0");
 
-		table_addcolumn("parameters", "gamplant_0");
-		table_addcolumn("parameters", "gamplant_1");
-
+		table_addcolumn("parameters", "gampiaps_0");
+		table_addcolumn("parameters", "gampiaps_1");
 
 		table_addcolumn("parameters", "gammine_0");
 		table_addcolumn("parameters", "gammine_1");
@@ -635,6 +649,8 @@ void applyModel(int plookup)
 		table_addcolumn("parameters", "gamlu_0");
 		table_addcolumn("parameters", "gamlu_1");
 		table_addcolumn("parameters", "gamlu_2");
+		table_addcolumn("parameters", "gamlu_3");
+		table_addcolumn("parameters", "gamlu_4");
 	}
 
 	//other auxiliary variables
@@ -742,9 +758,9 @@ void applyModel(int plookup)
 			  //EDIT
 
 			  //Exporting predicted probabilites to get AUC -- MARIA change xll yll corners
-			printf("\n Exporting predicted probabilities \n");
-			sprintf(fname, "E:/Sumatra_model_August22/tmf/N_Sumatra/model_N_Sumatra_C/predprob_yr%d_i%d.asc", n, j);
-			writeAsciiGrid(fname, predprob, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
+			//printf("\n Exporting predicted probabilities \n");
+			//sprintf(fname, "M:\Sumatra_model_August22\hansen\Lampung\model_Lampung_H/predprob_yr%d_i%d.asc", n, j);
+			//writeAsciiGrid(fname, predprob, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 			printf("\n deforest model, year %d", n);
 
@@ -753,13 +769,13 @@ void applyModel(int plookup)
 
 
 			//export the annual forest cover map as an ASCII file
-			printf("\n Exporting new forest cover map \n");
-			sprintf(fname, "E:/Sumatra_model_August22/tmf/N_Sumatra/model_N_Sumatra_C/predfor_i%d_%dyr.asc", j, n);
-			writeAsciiGrid(fname, modelForest, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
+			//printf("\n Exporting new forest cover map \n");
+			//sprintf(fname, "M:\Sumatra_model_August22\hansen\Lampung\model_Lampung_H/predfor_i%d_%dyr.asc", j, n);
+			//writeAsciiGrid(fname, modelForest, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 			//export the annual deforestation map as an ASCII file
 			printf("\n Exporting deforestation map for time %d \n", n);
-			sprintf(fname, "E:/Sumatra_model_August22/tmf/N_Sumatra/model_N_Sumatra_C/preddef_i%d_%dyr.asc", j, n);
+			sprintf(fname, "M:\Sumatra_model_August22\hansen\Lampung\model_Lampung_H/preddef_i%d_%dyr.asc", j, n);
 			writeAsciiGrid(fname, modelDef, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 
@@ -779,19 +795,23 @@ void applyModel(int plookup)
 		table_writevalue("parameters", "beta_8", j, cv("beta_8"));
 		table_writevalue("parameters", "beta_9", j, cv("beta_9"));
 		table_writevalue("parameters", "beta_10", j, cv("beta_10"));
+		table_writevalue("parameters", "beta_11", j, cv("beta_11"));
+		table_writevalue("parameters", "beta_12", j, cv("beta_12"));
+		table_writevalue("parameters", "beta_13", j, cv("beta_13"));
 
 		table_writevalue("parameters", "gampeat_0", j, cv("gamma_peat", 0));
 
-		table_writevalue("parameters", "gamplant_0", j, cv("gamma_plant", 0));
-		table_writevalue("parameters", "gamplant_1", j, cv("gamma_plant", 1));
+		table_writevalue("parameters", "gampiaps_0", j, cv("gamma_piaps", 0));
+		table_writevalue("parameters", "gampiaps_1", j, cv("gamma_piaps", 1));
 
 		table_writevalue("parameters", "gammine_0", j, cv("gamma_mine", 0));
 		table_writevalue("parameters", "gammine_1", j, cv("gamma_mine", 1));
 
-
 		table_writevalue("parameters", "gamlu_0", j, cv("gamma_lu", 0));
 		table_writevalue("parameters", "gamlu_1", j, cv("gamma_lu", 1));
 		table_writevalue("parameters", "gamlu_2", j, cv("gamma_lu", 2));
+		table_writevalue("parameters", "gamlu_3", j, cv("gamma_lu", 3));
+		table_writevalue("parameters", "gamlu_4", j, cv("gamma_lu", 4));
 
 		//Export forestdata table
 		sprintf(fname, "./workspace/Model_35yrs_temp.txt");
@@ -819,22 +839,25 @@ void read_data()
 
 	//read various ascii grids with input data
 	//EDIT
-	readAsciiGrid("./workspace/forest_2017_21_180m_repro_res_tmf_N_Sumatra.ascii", forest);		//
-	readAsciiGrid("./workspace/deforestation_2017_21_180m_repro_res_tmf_N_Sumatra.ascii", def);		//
-	readAsciiGrid("./workspace/slope_180m_repro_res_tmf_N_Sumatra.ascii", slope);		//
-	readAsciiGrid("./workspace/fire_yearly_average_180m_repro_res_tmf_N_Sumatra.ascii", fire);		//
-	readAsciiGrid("./workspace/IDN_TTCSM_hrs_180m_repro_res_tmf_N_Sumatra.ascii", access_hrs);		//
-	readAsciiGrid("./workspace/road_distance_180m_repro_res_tmf_N_Sumatra.ascii", roads);		//
-	readAsciiGrid("./workspace/river_distance_180m_repro_res_tmf_N_Sumatra.ascii", rivers);		//
-	readAsciiGrid("./workspace/pressurelog10_sigma1_180m_repro_res_tmf_N_Sumatra.ascii", pp_1);		//
-	readAsciiGrid("./workspace/subsistence_LH_distance_180m_repro_res_tmf_N_Sumatra.ascii", subsistenceLH);		//
-	readAsciiGrid("./workspace/plantation_LH_distance_180m_repro_res_tmf_N_Sumatra.ascii", plantationLH);		//
-	readAsciiGrid("./workspace/transmigrant_distance_180m_repro_res_tmf_N_Sumatra.ascii", transmigrant);		//
+	readAsciiGrid("./workspace/forest_2017_21_180m_repro_res_hansen_Lampung.ascii", forest);		//
+	readAsciiGrid("./workspace/deforestation_2017_21_180m_repro_res_hansen_Lampung.ascii", def);		//
+	readAsciiGrid("./workspace/slope_180m_repro_res_hansen_Lampung.ascii", slope);		//
+	readAsciiGrid("./workspace/fire_yearly_average_180m_repro_res_hansen_Lampung.ascii", fire);		//
+	readAsciiGrid("./workspace/IDN_TTCSM_hrs_180m_repro_res_hansen_Lampung.ascii", access_hrs);		//
+	readAsciiGrid("./workspace/road_distance_180m_repro_res_hansen_Lampung.ascii", roads);		//
+	readAsciiGrid("./workspace/river_distance_180m_repro_res_hansen_Lampung.ascii", rivers);		//
+	readAsciiGrid("./workspace/pressurelog10_sigma1_180m_repro_res_hansen_Lampung.ascii", pp_1);		//
+	readAsciiGrid("./workspace/subsistence_LH_distance_180m_repro_res_hansen_Lampung.ascii", subsistenceLH);		//
+	readAsciiGrid("./workspace/plantation_LH_distance_180m_repro_res_hansen_Lampung.ascii", plantationLH);		//
+	readAsciiGrid("./workspace/non_agri_LH_distance_180m_repro_res_hansen_Lampung.ascii", non_agriLH);		//
+	readAsciiGrid("./workspace/transmigrant_distance_180m_repro_res_hansen_Lampung.ascii", transmigrant);		//
+	readAsciiGrid("./workspace/ind_plantations_distance_180m_repro_res_hansen_Lampung.ascii", ind_plantations);		//
+	readAsciiGrid("./workspace/soc_econMPI_180m_repro_res_hansen_Lampung.ascii", mpi);		//
 
-	readAsciiGrid("./workspace/peat_180m_repro_res_tmf_N_Sumatra.ascii", peat);		//peat
-	readAsciiGrid("./workspace/plantations_180m_repro_res_tmf_N_Sumatra.ascii", plantations);		//
-	readAsciiGrid("./workspace/mining_180m_repro_res_tmf_N_Sumatra.ascii", mining);		//mining
-	readAsciiGrid("./workspace/lu_180m_repro_res_tmf_N_Sumatra.ascii", landuse);		//landuse
+	readAsciiGrid("./workspace/peat_180m_repro_res_hansen_Lampung.ascii", peat);		//peat
+	readAsciiGrid("./workspace/piaps_180m_repro_res_hansen_Lampung.ascii", piaps);		//
+	readAsciiGrid("./workspace/mining_180m_repro_res_hansen_Lampung.ascii", mining);		//mining
+	readAsciiGrid("./workspace/lu_new_class_180m_repro_res_hansen_Lampung.ascii", landuse);		//landuse
 	return;
 
 }
@@ -853,25 +876,29 @@ void setup_model()
 		parameter_create_vector("gamma_b0", -6.0, 6.0, 0.0, 0, 0, 1, 9);	//vector to store different b0 for each state (not used...)
 
 																			// continuous variables
-	parameter_create("beta_1", -1.0, 8.0, 0.0, 0, 0, 6);		//proportion of deforested neighbours (updated every year, dynamic variable)
-	parameter_create("beta_2", -1.0000, 0.0001, 0.0, 0, 0, 2);		//slope
-	parameter_create("beta_3", -2.0, 2.0, 0.0, 0, 0, 2);		//fire
-	parameter_create("beta_4", -2.0, 2.0, 0.0, 0, 0, 2);		//access_hrs
-	parameter_create("beta_5", -2.0, 2.0, 0.0, 0, 0, 2);		//roads
-	parameter_create("beta_6", -2.0, 2.0, 0.0, 0, 0, 2);		//rivers
-	parameter_create("beta_7", -2.0, 2.0, 0.0, 0, 0, 2);		//population pressure sigma 1
-	parameter_create("beta_8", -1.0, 1.0, 0.0, 0, 0, 2);		//distance to subsistence
-	parameter_create("beta_9", -1.0, 1.0, 0.0, 0, 0, 2);		//distance to plantation
-	parameter_create("beta_10", -1.0, 1.0, 0.0, 0, 0, 2);		//transmigrant
+	parameter_create("beta_1", -6.0, 8.0, 0.0, 0, 0, 1);		//proportion of deforested neighbours (updated every year, dynamic variable)
+	parameter_create("beta_2", -1.0000, 0.0001, 0.0, 0, 0, 1);		//slope
+	parameter_create("beta_3", -2.0, 25.0, 0.0, 0, 0, 1);		//fire
+	parameter_create("beta_4", -2.0, 2.0, 0.0, 0, 0, 1);		//access_hrs
+	parameter_create("beta_5", -1.0, 1.0, 0.0, 0, 0, 1);		//roads
+	parameter_create("beta_6", -1.0, 1.0, 0.0, 0, 0, 1);		//rivers
+	parameter_create("beta_7", -2.0, 2.0, 0.0, 0, 0, 1);		//population pressure sigma 1
+	parameter_create("beta_8", -1.0, 1.0, 0.0, 0, 0, 1);		//distance to subsistence
+	parameter_create("beta_9", -1.0, 1.0, 0.0, 0, 0, 1);		//distance to plantation
+	parameter_create("beta_10", -1.0, 1.0, 0.0, 0, 0, 1);		//distance to non_agri
+	parameter_create("beta_11", -1.0, 1.0, 0.0, 0, 0, 1);		//transmigrant
+	parameter_create("beta_12", -2.0, 2.0, 0.0, 0, 0, 1);		//distance small scale
+	parameter_create("beta_13", -10.0, 2.0, 0.0, 0, 0, 1);		//mpi
 
-	parameter_create_vector("gamma_peat", -2.0, 2.0, 0.0, 0, 0, 1, 1);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
+	parameter_create_vector("gamma_peat", -2.0, 10.0, 0.0, 0, 0, 1, 1);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
 
-	parameter_create_vector("gamma_mine", -2.0, 2.0, 0.0, 0, 0, 1, 2);	//mining
+	parameter_create_vector("gamma_piaps", -4.0, 2.0, 0.0, 0, 0, 1, 2);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
 
-	parameter_create_vector("gamma_plant", -2.0, 2.0, 0.0, 0, 0, 1, 2);	//plantations
-// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
+	parameter_create_vector("gamma_mine", -7.0, 2.0, 0.0, 0, 0, 1, 2);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
 
-	parameter_create_vector("gamma_lu", -2.0, 6.0, 0.0, 0, 0, 1, 3);// EDIT
+	parameter_create_vector("gamma_lu", -6.0, 4.0, 0.0, 0, 0, 1, 5);// EDIT
+
+
 	parameter_create("rho", CELLSIZE, (CELLSIZE * 20.0), (CELLSIZE * 2.0), 0, 0, 1); // distance, in km, at which the effect of a deforested nbor drops to 1/e of the max value
 															   // For stepwise regression
 	if (tfree[0] == 0)
@@ -894,14 +921,20 @@ void setup_model()
 		parameter_fix("beta_9", 0.0); // name, and value to fix at
 	if (tfree[9] == 0)
 		parameter_fix("beta_10", 0.0); // name, and value to fix at
-	
 	if (tfree[10] == 0)
-		parameter_fix("gamma_peat", 0.0); // name, and value to fix at
+		parameter_fix("beta_11", 0.0); // name, and value to fix at
 	if (tfree[11] == 0)
-		parameter_fix("gamma_plant", 0.0); // name, and value to fix at
+		parameter_fix("beta_12", 0.0); // name, and value to fix at
 	if (tfree[12] == 0)
-		parameter_fix("gamma_mine", 0.0); // name, and value to fix at
+		parameter_fix("beta_13", 0.0); // name, and value to fix at
+
 	if (tfree[13] == 0)
+		parameter_fix("gamma_peat", 0.0); // name, and value to fix at
+	if (tfree[14] == 0)
+		parameter_fix("gamma_piaps", 0.0); // name, and value to fix at
+	if (tfree[15] == 0)
+		parameter_fix("gamma_mine", 0.0); // name, and value to fix at
+	if (tfree[16] == 0)
 		parameter_fix("gamma_lu", 0.0); // name, and value to fix at
 	parameter_showall();
 
@@ -1041,8 +1074,8 @@ int main()
 	double bestdfit; // the best dfit we have found in this turn
 
 					 // Maria - change to total number of parameters
-	int pfree[15]; // this is 1 if the parameter is set to be ALWAYS free
-	int npara = 15; // number of params we are considering as fixed or not
+	int pfree[17]; // this is 1 if the parameter is set to be ALWAYS free
+	int npara = 17; // number of params we are considering as fixed or not
 
 	static int rr = 0; //counter for output model likelihood table
 
@@ -1050,7 +1083,7 @@ int main()
 
 
 	//if 1 - runs forward stepwise regression
-#if 1
+#if 0
 	//Create "likelihood" table
 	//add 8 columns to store if the parameters if fixed (0) or free (1) in each run of the stepwise regression
 	table_create("model_likelihood");
@@ -1066,9 +1099,12 @@ int main()
 	table_addcolumn("model_likelihood", "beta_8");
 	table_addcolumn("model_likelihood", "beta_9");
 	table_addcolumn("model_likelihood", "beta_10");
+	table_addcolumn("model_likelihood", "beta_11");
+	table_addcolumn("model_likelihood", "beta_12");
+	table_addcolumn("model_likelihood", "beta_13");
 
 	table_addcolumn("model_likelihood", "gamma_peat");
-	table_addcolumn("model_likelihood", "gamma_plant");
+	table_addcolumn("model_likelihood", "gamma_piaps");
 	table_addcolumn("model_likelihood", "gamma_mine");
 	table_addcolumn("model_likelihood", "gamma_lu");
 	table_addcolumn("model_likelihood", "traininglikelihood");
@@ -1086,11 +1122,14 @@ int main()
 	table_addcolumn("model_likelihood", "beta_8pm");
 	table_addcolumn("model_likelihood", "beta_9pm");
 	table_addcolumn("model_likelihood", "beta_10pm");
+	table_addcolumn("model_likelihood", "beta_11pm");
+	table_addcolumn("model_likelihood", "beta_12pm");
+	table_addcolumn("model_likelihood", "beta_13pm");
 
 	table_addcolumn("model_likelihood", "gamma_0peat");
 
-	table_addcolumn("model_likelihood", "gamma_0plant");
-	table_addcolumn("model_likelihood", "gamma_1plant");
+	table_addcolumn("model_likelihood", "gamma_0piaps");
+	table_addcolumn("model_likelihood", "gamma_1piaps");
 
 	table_addcolumn("model_likelihood", "gamma_0mine");
 	table_addcolumn("model_likelihood", "gamma_1mine");
@@ -1098,6 +1137,8 @@ int main()
 	table_addcolumn("model_likelihood", "gamma_0lu");
 	table_addcolumn("model_likelihood", "gamma_1lu");
 	table_addcolumn("model_likelihood", "gamma_2lu");
+	table_addcolumn("model_likelihood", "gamma_3lu");
+	table_addcolumn("model_likelihood", "gamma_4lu");
 
 	//Read input data from files:
 	read_data();
@@ -1147,7 +1188,7 @@ int main()
 				initialize_filzbach();
 				beta0_global = 1;
 				setup_model();
-				sprintf(aname, "´N_Sumatra_1_%d", rr);
+				sprintf(aname, "´Lampung_1_%d", rr);
 				name_analysis(aname);					//This gives a name to the analysis. All the outputs will have this extension.
 				set_chains(1);
 
@@ -1179,11 +1220,14 @@ int main()
 				table_writevalue("model_likelihood", "beta_8", rr, tfree[7]);
 				table_writevalue("model_likelihood", "beta_9", rr, tfree[8]);
 				table_writevalue("model_likelihood", "beta_10", rr, tfree[9]);
+				table_writevalue("model_likelihood", "beta_11", rr, tfree[10]);
+				table_writevalue("model_likelihood", "beta_12", rr, tfree[11]);
+				table_writevalue("model_likelihood", "beta_13", rr, tfree[12]);
 
-				table_writevalue("model_likelihood", "gamma_peat", rr, tfree[10]);
-				table_writevalue("model_likelihood", "gamma_plant", rr, tfree[11]);
-				table_writevalue("model_likelihood", "gamma_mine", rr, tfree[12]);
-				table_writevalue("model_likelihood", "gamma_lu", rr, tfree[13]);
+				table_writevalue("model_likelihood", "gamma_peat", rr, tfree[13]);
+				table_writevalue("model_likelihood", "gamma_piaps", rr, tfree[14]);
+				table_writevalue("model_likelihood", "gamma_mine", rr, tfree[15]);
+				table_writevalue("model_likelihood", "gamma_lu", rr, tfree[16]);
 
 
 
@@ -1204,11 +1248,14 @@ int main()
 				table_writevalue("model_likelihood", "beta_8pm", rr, cv("beta_8"));
 				table_writevalue("model_likelihood", "beta_9pm", rr, cv("beta_9"));
 				table_writevalue("model_likelihood", "beta_10pm", rr, cv("beta_10"));
+				table_writevalue("model_likelihood", "beta_11pm", rr, cv("beta_11"));
+				table_writevalue("model_likelihood", "beta_12pm", rr, cv("beta_12"));
+				table_writevalue("model_likelihood", "beta_13pm", rr, cv("beta_13"));
 
 				table_writevalue("model_likelihood", "gamma_0peat", rr, cv("gamma_peat", 0));
 
-				table_writevalue("model_likelihood", "gamma_0plant", rr, cv("gamma_plant", 0));
-				table_writevalue("model_likelihood", "gamma_1plant", rr, cv("gamma_plant", 1));
+				table_writevalue("model_likelihood", "gamma_0piaps", rr, cv("gamma_piaps", 0));
+				table_writevalue("model_likelihood", "gamma_1piaps", rr, cv("gamma_piaps", 1));
 
 				table_writevalue("model_likelihood", "gamma_0mine", rr, cv("gamma_mine", 0));
 				table_writevalue("model_likelihood", "gamma_1mine", rr, cv("gamma_mine", 1));
@@ -1216,6 +1263,9 @@ int main()
 				table_writevalue("model_likelihood", "gamma_0lu", rr, cv("gamma_lu", 0));
 				table_writevalue("model_likelihood", "gamma_1lu", rr, cv("gamma_lu", 1));
 				table_writevalue("model_likelihood", "gamma_2lu", rr, cv("gamma_lu", 2));
+				table_writevalue("model_likelihood", "gamma_3lu", rr, cv("gamma_lu", 3));
+				table_writevalue("model_likelihood", "gamma_4lu", rr, cv("gamma_lu", 4));
+
 
 				//output likelihood table 
 				table_output("model_likelihood", "./workspace/TempLhoodDdef_1.txt");
@@ -1256,7 +1306,7 @@ int main()
 #endif
 
 	//if 1 runs simulations using defined model
-#if 0
+#if 1
 	//read data
 	read_data();
 
@@ -1267,21 +1317,24 @@ int main()
 	tfree[0] = 1; //Deforestation
 	tfree[1] = 1; //slope
 	tfree[2] = 1; //fire
-	tfree[3] = 0; //access_hrs
-	tfree[3] = 0; //roads
-	tfree[3] = 0; //rivers
-	tfree[4] = 0; //pp1
-	tfree[5] = 1; //dist sustainability
-	tfree[6] = 1; //dist plantation
-	tfree[7] = 1; //transmigrant
+	tfree[3] = 1; //access_hrs
+	tfree[4] = 0; //roads
+	tfree[5] = 1; //rivers
+	tfree[6] = 0; //pp1
+	tfree[7] = 1; //dist sustainability
+	tfree[8] = 1; //dist plantation
+	tfree[9] = 1; //dist non-agri
+	tfree[10] = 1; //transmigrant
+	tfree[11] = 0; //dist small scale plant
+	tfree[12] = 0; //mpi
 
-	tfree[8] = 1; //peat
-	tfree[9] = 1; //plantations
-	tfree[10] = 1; //mine
-	tfree[11] = 1; //landuse
+	tfree[13] = 1; //peat
+	tfree[14] = 1; //piaps
+	tfree[15] = 0; //mine
+	tfree[16] = 1; //landuse
 
 	setup_model();
-	name_analysis("N_Sumatra_model");
+	name_analysis("Lampung_model");
 	set_chains(1);
 
 	//tell likelihood to use training data

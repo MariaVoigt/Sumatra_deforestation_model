@@ -36,11 +36,11 @@ void pause() { PAUSE }
 
 // Maria - change dimensions of input data
 
-//Aceh
-#define GRIDNX 2143
-#define GRIDNY 2401 // dimensions of grid we are using
-#define XLLCORNER -3292738.004836000036
-#define YLLCORNER  1824309.389224000275// coerner dimensions
+// S_Sumatra
+#define GRIDNX 2458
+#define GRIDNY 2157 // dimensions of grid we are using
+#define XLLCORNER -2440978.004000000190
+#define YLLCORNER  1090629.379999999888// coerner dimensions
 
 
 #define CELLSIZE 180  //cellsize
@@ -758,9 +758,9 @@ void applyModel(int plookup)
 			  //EDIT
 
 			  //Exporting predicted probabilites to get AUC -- MARIA change xll yll corners
-			printf("\n Exporting predicted probabilities \n");
-			sprintf(fname, "E:/Sumatra_model_August22/tmf/Aceh/model_Aceh_A/predprob_yr%d_i%d.asc", n, j);
-			writeAsciiGrid(fname, predprob, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
+			//printf("\n Exporting predicted probabilities \n");
+			//sprintf(fname, "M:/Sumatra_model_August22/tmf/S_Sumatra/model_S_Sumatra_A/predprob_yr%d_i%d.asc", n, j);
+			//writeAsciiGrid(fname, predprob, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 			printf("\n deforest model, year %d", n);
 
@@ -769,13 +769,13 @@ void applyModel(int plookup)
 
 
 			//export the annual forest cover map as an ASCII file
-			printf("\n Exporting new forest cover map \n");
-			sprintf(fname, "E:/Sumatra_model_August22/tmf/Aceh/model_Aceh_A/predfor_i%d_%dyr.asc", j, n);
-			writeAsciiGrid(fname, modelForest, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
+			//printf("\n Exporting new forest cover map \n");
+			//sprintf(fname, "M:/Sumatra_model_August22/tmf/S_Sumatra/model_S_Sumatra_A/predfor_i%d_%dyr.asc", j, n);
+			//writeAsciiGrid(fname, modelForest, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 			//export the annual deforestation map as an ASCII file
 			printf("\n Exporting deforestation map for time %d \n", n);
-			sprintf(fname, "E:/Sumatra_model_August22/tmf/Aceh/model_Aceh_A/preddef_i%d_%dyr.asc", j, n);
+			sprintf(fname, "M:/Sumatra_model_August22/tmf/S_Sumatra/model_S_Sumatra_A/preddef_i%d_%dyr.asc", j, n);
 			writeAsciiGrid(fname, modelDef, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 
@@ -814,18 +814,18 @@ void applyModel(int plookup)
 		table_writevalue("parameters", "gamlu_4", j, cv("gamma_lu", 4));
 
 		//Export forestdata table
-		sprintf(fname, "./workspace/Model_35yrs_temp.txt");
+		sprintf(fname, "M:/Sumatra_model_August22/tmf/S_Sumatra/model_S_Sumatra_A/Model_35yrs_temp.txt");
 		table_output("forestdata", fname);
 
 	} //End error propagation loop 
 
 	  //EDIT
 	  //Export forestdata table
-	sprintf(fname, "./workspace/Model_35yrs.txt");
+	sprintf(fname, "M:/Sumatra_model_August22/tmf/S_Sumatra/model_S_Sumatra_A/Model_35yrs.txt");
 	table_output("forestdata", fname);
 
 	//Export parameters table 
-	table_output("parameters", "./workspace/Parameters_Values.txt");
+	table_output("parameters", "M:/Sumatra_model_August22/tmf/S_Sumatra/model_S_Sumatra_A/Parameters_Values.txt");
 
 
 	return;
@@ -839,25 +839,25 @@ void read_data()
 
 	//read various ascii grids with input data
 	//EDIT
-	readAsciiGrid("./workspace/forest_2017_21_180m_repro_res_tmf_Aceh.ascii", forest);		//
-	readAsciiGrid("./workspace/deforestation_2017_21_180m_repro_res_tmf_Aceh.ascii", def);		//
-	readAsciiGrid("./workspace/slope_180m_repro_res_tmf_Aceh.ascii", slope);		//
-	readAsciiGrid("./workspace/fire_yearly_average_180m_repro_res_tmf_Aceh.ascii", fire);		//
-	readAsciiGrid("./workspace/IDN_TTCSM_hrs_180m_repro_res_tmf_Aceh.ascii", access_hrs);		//
-	readAsciiGrid("./workspace/road_distance_180m_repro_res_tmf_Aceh.ascii", roads);		//
-	readAsciiGrid("./workspace/river_distance_180m_repro_res_tmf_Aceh.ascii", rivers);		//
-	readAsciiGrid("./workspace/pressurelog10_sigma1_180m_repro_res_tmf_Aceh.ascii", pp_1);		//
-	readAsciiGrid("./workspace/subsistence_LH_distance_180m_repro_res_tmf_Aceh.ascii", subsistenceLH);		//
-	readAsciiGrid("./workspace/plantation_LH_distance_180m_repro_res_tmf_Aceh.ascii", plantationLH);		//
-	readAsciiGrid("./workspace/non_agri_LH_distance_180m_repro_res_tmf_Aceh.ascii", non_agriLH);		//
-	readAsciiGrid("./workspace/transmigrant_distance_180m_repro_res_tmf_Aceh.ascii", transmigrant);		//
-	readAsciiGrid("./workspace/small_plantations_distance_180m_repro_res_tmf_Aceh.ascii", small_plantations);		//
-	readAsciiGrid("./workspace/soc_econMPI_180m_repro_res_tmf_Aceh.ascii", mpi);		//
+	readAsciiGrid("./workspace/forest_2017_21_180m_repro_res_tmf_S_Sumatra.ascii", forest);		//
+	readAsciiGrid("./workspace/deforestation_2017_21_180m_repro_res_tmf_S_Sumatra.ascii", def);		//
+	readAsciiGrid("./workspace/slope_180m_repro_res_tmf_S_Sumatra.ascii", slope);		//
+	readAsciiGrid("./workspace/fire_yearly_average_180m_repro_res_tmf_S_Sumatra.ascii", fire);		//
+	readAsciiGrid("./workspace/IDN_TTCSM_hrs_180m_repro_res_tmf_S_Sumatra.ascii", access_hrs);		//
+	readAsciiGrid("./workspace/road_distance_180m_repro_res_tmf_S_Sumatra.ascii", roads);		//
+	readAsciiGrid("./workspace/river_distance_180m_repro_res_tmf_S_Sumatra.ascii", rivers);		//
+	readAsciiGrid("./workspace/pressurelog10_sigma1_180m_repro_res_tmf_S_Sumatra.ascii", pp_1);		//
+	readAsciiGrid("./workspace/subsistence_LH_distance_180m_repro_res_tmf_S_Sumatra.ascii", subsistenceLH);		//
+	readAsciiGrid("./workspace/plantation_LH_distance_180m_repro_res_tmf_S_Sumatra.ascii", plantationLH);		//
+	readAsciiGrid("./workspace/non_agri_LH_distance_180m_repro_res_tmf_S_Sumatra.ascii", non_agriLH);		//
+	readAsciiGrid("./workspace/transmigrant_distance_180m_repro_res_tmf_S_Sumatra.ascii", transmigrant);		//
+	readAsciiGrid("./workspace/small_plantations_distance_180m_repro_res_tmf_S_Sumatra.ascii", small_plantations);		//
+	readAsciiGrid("./workspace/soc_econMPI_180m_repro_res_tmf_S_Sumatra.ascii", mpi);		//
 
-	readAsciiGrid("./workspace/peat_180m_repro_res_tmf_Aceh.ascii", peat);		//peat
-	readAsciiGrid("./workspace/piaps_180m_repro_res_tmf_Aceh.ascii", piaps);		//
-	readAsciiGrid("./workspace/mining_180m_repro_res_tmf_Aceh.ascii", mining);		//mining
-	readAsciiGrid("./workspace/lu_new_class_180m_repro_res_tmf_Aceh.ascii", landuse);		//landuse
+	readAsciiGrid("./workspace/peat_180m_repro_res_tmf_S_Sumatra.ascii", peat);		//peat
+	readAsciiGrid("./workspace/piaps_180m_repro_res_tmf_S_Sumatra.ascii", piaps);		//
+	readAsciiGrid("./workspace/mining_180m_repro_res_tmf_S_Sumatra.ascii", mining);		//mining
+	readAsciiGrid("./workspace/lu_new_class_180m_repro_res_tmf_S_Sumatra.ascii", landuse);		//landuse
 	return;
 
 }
@@ -1188,7 +1188,7 @@ int main()
 				initialize_filzbach();
 				beta0_global = 1;
 				setup_model();
-				sprintf(aname, "´Aceh_1_%d", rr);
+				sprintf(aname, "´S_Sumatra_1_%d", rr);
 				name_analysis(aname);					//This gives a name to the analysis. All the outputs will have this extension.
 				set_chains(1);
 
@@ -1268,7 +1268,7 @@ int main()
 
 
 				//output likelihood table 
-				table_output("model_likelihood", "./workspace/TempLhoodDdef_1.txt");
+				table_output("model_likelihood", "M:/Sumatra_model_August22/tmf/S_Sumatra/model_S_Sumatra_A/TempLhoodDdef_1.txt");
 
 				//move counter
 				rr++;
@@ -1301,7 +1301,7 @@ int main()
 	//EDIT
 
 	//output likelihood table 
-	table_output("model_likelihood", "./workspace/Models_Stepwise_1.txt");
+	table_output("model_likelihood", "M:/Sumatra_model_August22/tmf/S_Sumatra/model_S_Sumatra_A/Models_Stepwise_1.txt");
 
 #endif
 
@@ -1317,24 +1317,24 @@ int main()
 	tfree[0] = 1; //Deforestation
 	tfree[1] = 1; //slope
 	tfree[2] = 1; //fire
-	tfree[3] = 0; //access_hrs
+	tfree[3] = 1; //access_hrs
 	tfree[4] = 1; //roads
-	tfree[5] = 1; //rivers
-	tfree[6] = 0; //pp1
+	tfree[5] = 0; //rivers
+	tfree[6] = 1; //pp1
 	tfree[7] = 0; //dist sustainability
 	tfree[8] = 1; //dist plantation
 	tfree[9] = 1; //dist non-agri
-	tfree[10] = 1; //transmigrant
+	tfree[10] = 0; //transmigrant
 	tfree[11] = 1; //dist small scale plant
 	tfree[12] = 0; //mpi
 
 	tfree[13] = 1; //peat
-	tfree[14] = 0; //piaps
+	tfree[14] = 1; //piaps
 	tfree[15] = 1; //mine
 	tfree[16] = 1; //landuse
 
 	setup_model();
-	name_analysis("Aceh_model");
+	name_analysis("S_Sumatra_model");
 	set_chains(1);
 
 	//tell likelihood to use training data

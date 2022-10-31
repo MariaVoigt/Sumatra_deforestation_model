@@ -814,18 +814,18 @@ void applyModel(int plookup)
 		table_writevalue("parameters", "gamlu_4", j, cv("gamma_lu", 4));
 
 		//Export forestdata table
-		sprintf(fname, "M:/Sumatra_model_August22/tmf/S_Sumatra/model_S_Sumatra_A/Model_35yrs_temp.txt");
+		sprintf(fname, "./workspace/Model_35yrs_temp.txt");
 		table_output("forestdata", fname);
 
 	} //End error propagation loop 
 
 	  //EDIT
 	  //Export forestdata table
-	sprintf(fname, "M:/Sumatra_model_August22/tmf/S_Sumatra/model_S_Sumatra_A/Model_35yrs.txt");
+	sprintf(fname, "./workspace/Model_35yrs.txt");
 	table_output("forestdata", fname);
 
 	//Export parameters table 
-	table_output("parameters", "M:/Sumatra_model_August22/tmf/S_Sumatra/model_S_Sumatra_A/Parameters_Values.txt");
+	table_output("parameters", "./workspace/Parameters_Values.txt");
 
 
 	return;
@@ -888,9 +888,9 @@ void setup_model()
 	parameter_create("beta_10", -1.0, 1.0, 0.0, 0, 0, 1);		//distance to non_agri
 	parameter_create("beta_11", -1.0, 1.0, 0.0, 0, 0, 1);		//transmigrant
 	parameter_create("beta_12", -2.0, 2.0, 0.0, 0, 0, 1);		//distance small scale
-	parameter_create("beta_13", -2.0, 2.0, 0.0, 0, 0, 1);		//mpi
+	parameter_create("beta_13", -10.0, 2.0, 0.0, 0, 0, 1);		//mpi
 
-	parameter_create_vector("gamma_peat", -3.0, 2.0, 0.0, 0, 0, 1, 1);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
+	parameter_create_vector("gamma_peat", -4.0, 2.0, 0.0, 0, 0, 1, 1);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
 
 	parameter_create_vector("gamma_piaps", -4.0, 2.0, 0.0, 0, 0, 1, 2);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
 
@@ -1268,7 +1268,7 @@ int main()
 
 
 				//output likelihood table 
-				table_output("model_likelihood", "M:/Sumatra_model_August22/tmf/S_Sumatra/model_S_Sumatra_A/TempLhoodDdef_1.txt");
+				table_output("model_likelihood", "./workspace/TempLhoodDdef_1.txt");
 
 				//move counter
 				rr++;
@@ -1298,10 +1298,10 @@ int main()
 		pfree[bfree] = 1;
 	}
 
-	//EDIT
+	//EDITS
 
 	//output likelihood table 
-	table_output("model_likelihood", "M:/Sumatra_model_August22/tmf/S_Sumatra/model_S_Sumatra_A/Models_Stepwise_1.txt");
+	table_output("model_likelihood", "./workspace/Models_Stepwise_1.txt");
 
 #endif
 
@@ -1318,10 +1318,10 @@ int main()
 	tfree[1] = 1; //slope
 	tfree[2] = 1; //fire
 	tfree[3] = 1; //access_hrs
-	tfree[4] = 1; //roads
+	tfree[4] = 0; //roads
 	tfree[5] = 0; //rivers
 	tfree[6] = 1; //pp1
-	tfree[7] = 0; //dist sustainability
+	tfree[7] = 1; //dist sustainability
 	tfree[8] = 1; //dist plantation
 	tfree[9] = 1; //dist non-agri
 	tfree[10] = 0; //transmigrant
