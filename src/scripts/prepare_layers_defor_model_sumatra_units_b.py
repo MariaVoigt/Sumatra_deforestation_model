@@ -224,9 +224,9 @@ for forest_layer_type in forest_layer_types:
 # CONTINUE HERE INCLUDING FOREST IN PREDICTORS
 
 #list_unit = list_units[4]
-
-
-for forest_layer_type in forest_layer_types:
+for list_unit in list_units:    
+    print("starting units " + str(list_unit))
+    for forest_layer_type in forest_layer_types:
     #forest_layer_type = forest_layer_types[0]
         print(forest_layer_type)
         out_path_units = out_path_pred+ "\\" + forest_layer_type + "\\units"
