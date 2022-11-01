@@ -245,7 +245,7 @@ for year in range(1, 8):
     preddef_list_yr = glob.glob(in_path_sumatra_yr_cum)
     # make an empty tif file 
     sumprob =  np.zeros(shape_out)
-    sumprob_path = out_path + "\\Sumatra_"+ forest_layer +"_yr" + str(year) + "_sumprob.tif"
+    sumprob_path = out_path + "\\Sumatra_"+ forest_layer +"_yr_"+str(start_sumprob) + "_"+ str(end_sumprob) +  "_sumprob.tif"
 
         
     for i in range(0,len(preddef_list_yr)):
