@@ -274,7 +274,7 @@ mp.tif.write(base_path,
 years = range(1990, 2022)
 tile_ids = ["ID61_N10_E100", "ID60_N10_E90", "ID39_N0_E100", "ID38_N0_E90"]
 # we need these because we only want the ones from sumatra
-tmf_path = r'N:\Landcover\Indonesia\TMF_JRC_forest'
+tmf_path = r'N:\Landcover\Indonesia\TMF_JRC_forest\2021_version\AnnualChange'
 
 middle_path = r'\forobs\products\tmf_v1\AnnualChange'
 
@@ -588,7 +588,7 @@ mp.tif.write(processed_path + "\\" + MODIS_name + "_filtered_date_repro.tif ",
 
 # I am resampling this with near, because I don't want interpolation of values
 # change resolution
-mp.get_stdout("gdalwarp -r bilinear -overwrite "+
+mp.get_stdout("gdalwarp -r near -overwrite "+
         "-tr " + res + " -" + res + " -te " + extent +" "+ 
         processed_path + "\\" + MODIS_name + "_filtered_date_yearly_average_repro.tif " + 
         processed_path + "\\" + MODIS_name + "_filtered_date_yearly_average_repro_" + res + "m_repro_res.tif")

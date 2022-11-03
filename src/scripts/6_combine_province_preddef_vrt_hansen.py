@@ -12,6 +12,8 @@ join the deforestation maps from each province
 import numpy as np
 import os
 
+import glob
+
 import macpyver as mp
 
 km2_ha = 100
@@ -42,7 +44,7 @@ list_units = [[ "Aceh", "Aceh", "A"],
                          [ "Lampung", "Lampung",  "H"]
 ]
 
-NAS_path = r'C:\Users\mv296\SynologyDrive\My_drive\SynologyDrive\Sumatra_model_August22'
+#NAS_path = r'C:\Users\mv296\SynologyDrive\My_drive\SynologyDrive\Sumatra_model_August22'
 drive_path = r'E:\Sumatra_model_August22'
 
 
@@ -59,6 +61,14 @@ unit_shape_path = r'C:\Users\mv296\work\Sumatra\data\model_input\units'
 # getting the extent from running a vrt further down 
 extent = "-3292738.005  962109.389 -1981438.005 2256489.389"
 
+# define base paths and clip with shape without bangka belitung
+
+base_shape_path = r'N:\Admin_boundaries\GADM\Sumatra\sumatra_complete_shape_no_BB_repro.shp'
+# CONTINUE HERE!!!!
+# rasterize with -burn 1
+# use to clip them both
+
+
 base_path = (r'C:\Users\mv296\work\Sumatra\data\model_input\repro_res\predictors_final' +
  '\\' + forest_layer +  '\\' + "forest_2017_21_" + res + "m_repro_res_" + 
  forest_layer + ".tif")
@@ -73,7 +83,32 @@ mp.get_stdout("""gdalwarp -r "near" -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2
 base_map = mp.tif.read( out_path + "\\" + "forest_2017_21_" + res + "m_repro_res_" +  forest_layer + "_base.tif", 1)
 
 
-in_path = NAS_path + '\\' + forest_layer 
+
+# clip forest and deforest
+path_defor_17_21 = (r'C:\Users\mv296\work\Sumatra\data\model_input\repro_res\predictors_final' +
+                    '\\' + forest_layer +  '\\' + "deforestation_2017_21_" + res + "m_repro_res_" + 
+ forest_layer + ".tif")
+
+mp.get_stdout("""gdalwarp -r "near" -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """+
+        "-tr " + res + " -" + res + " -te " + extent + " "+
+        path_defor_17_21 + " " + 
+        out_path + "\\" + "deforestation_2017_21_" + res + "m_repro_res_" +  forest_layer + "_base.tif")
+
+
+defor_17_21 = mp.tif.read(out_path + "\\" + "deforestation_2017_21_" + res + "m_repro_res_" +  forest_layer + "_base.tif", 1)
+
+
+
+forest_17_21 = base_map 
+
+
+defor_00_16 = np.where(forest_17_21 == 0, 1, -9999)
+
+forest_17_21 = np.where(forest_17_21 == 0, -9999, forest_17_21)
+
+
+
+in_path = drive_path + '\\' + forest_layer 
 
 
 # extend all the province tifs to sumatra
@@ -85,11 +120,10 @@ in_path = NAS_path + '\\' + forest_layer
 #dalbuildvrt -separate stacked.vrt [in vrts or rasters]
 #gdal_translate stacked.vrt stacked.tif
 
+right_shape = (7191, 7285)
 
-
-for i in range(0,100):
+for i in range(76,100):
 #for i in range(0,5):    
-    
     print("i" + str(i))
     # initialize empty sumprob
     # will already expand extend for each year, because we need this later for not cummulative years
@@ -123,7 +157,9 @@ for i in range(0,100):
             # at the border between states there can be an overlap
         preddef_combined_i_yr = np.where(preddef_combined_i_yr < 0, -9999, preddef_combined_i_yr)
         preddef_combined_i_yr = np.where(preddef_combined_i_yr > 1, 1, preddef_combined_i_yr)  
-    
+        if np.shape(preddef_combined_i_yr) != right_shape:
+            print("shape not right: " + str(np.shape(preddef_combined_i_yr)))
+            break
     # I need the non-cummulative preddef for the future_forest_loss_5y script
         mp.tif.write( out_path + "\\Sumatra_"+ forest_layer +"_preddef_i"+ str(i) + "_yr" + str(year) + ".tif" ,
                     out_path + "\\Sumatra_"+ forest_layer +"_preddef_i"+ str(i) + "_yr" + str(year) + ".tif",
@@ -131,32 +167,14 @@ for i in range(0,100):
                      nodata = -9999,
                      option='compress=deflate')
 
-
+#check whether all output tifs were written
+total_number_files = 100 *8
+list_files = glob.glob(out_path + "\\Sumatra_"+ forest_layer +"_preddef_i*_yr[0-7].tif")
+len(list_files) == total_number_files
     
 #THIS IS CUMMULATIVE PREDDEF
 #I already have the units with the extent of borneo
 
-
-path_defor_17_21 = (r'C:\Users\mv296\work\Sumatra\data\model_input\repro_res\predictors_final' +
-                    '\\' + forest_layer +  '\\' + "deforestation_2017_21_" + res + "m_repro_res_" + 
- forest_layer + ".tif")
-
-mp.get_stdout("""gdalwarp -r "near" -overwrite -t_srs "+proj=aea +lat_1=7 +lat_2=-32 +lat_0=-15 +lon_0=125 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_def" """+
-        "-tr " + res + " -" + res + " -te " + extent + " "+
-        path_defor_17_21 + " " + 
-        out_path + "\\" + "deforestation_2017_21_" + res + "m_repro_res_" +  forest_layer + "_base.tif")
-
-
-defor_17_21 = mp.tif.read(out_path + "\\" + "deforestation_2017_21_" + res + "m_repro_res_" +  forest_layer + "_base.tif", 1)
-
-
-
-forest_17_21 = base_map 
-
-
-defor_00_16 = np.where(forest_17_21 == 0, 1, -9999)
-
-forest_17_21 = np.where(forest_17_21 == 0, -9999, forest_17_21)
 
 
 for i in range(0,100):
@@ -187,17 +205,18 @@ for i in range(0,100):
         # in repro_res
         preddef_yr_cum_cor = np.where(defor_17_21 == 1, 1, preddef_yr_cum)
         out_path_preddef_yr_cum_cor =  in_path_sumatra_i_yr[:-4 ] + "_defor_17_21.tif"
-       # mp.tif.write( base_path,
-       #          out_path_preddef_yr_cum_cor,
-       #          preddef_yr_cum_cor, nodata = -9999, option='compress=deflate')   
+        mp.tif.write( in_path_sumatra_i_yr,
+                out_path_preddef_yr_cum_cor,
+                preddef_yr_cum_cor,
+                nodata = -9999, option='compress=deflate')   
     
         
         # add the deforestation in year 2000-2013 in a different number
         preddef_yr_cum_cor_past_defor = np.where(defor_00_16 == 1, 2, preddef_yr_cum_cor)
         out_path_preddef_yr_cum_cor_past_defor = in_path_sumatra_i_yr[:-4 ] + "_defor_01_18.tif"
-       # mp.tif.write( base_path,
-       #                 out_path_preddef_yr_cum_cor_past_defor,
-       #                     preddef_yr_cum_cor_past_defor, nodata = -9999, option='compress=deflate')   
+        mp.tif.write( in_path_sumatra_i_yr,
+                        out_path_preddef_yr_cum_cor_past_defor,
+                           preddef_yr_cum_cor_past_defor, nodata = -9999, option='compress=deflate')   
         
         # compute remaining forest (where there is a 1 in forest_17_21 and a 1 in 
         # predicted defor, there a 0)
@@ -208,6 +227,45 @@ for i in range(0,100):
                        forest_yr_cum_cor, nodata = -9999, option='compress=deflate')   
     
         
-        
-        
+     
+# to make sumprob I only need to add up all 
+# we have years 1 to 7, year 1 is 2022+5 etc
+years = list()
+sumprobs = list()
+start_sumprob = 2021
+shape_out = forest_17_21.shape
 
+
+# create base map for sumprob, to know what is na and what isnt
+#N:\Admin_boundaries\GADM\Sumatra
+
+
+for year in range(1, 8):
+    print(year)
+
+    if year == 1:
+        start_sumprob = start_sumprob +1
+    else:
+        start_sumprob = start_sumprob + 5
+    end_sumprob = (start_sumprob-1) + 5
+    
+    if year == 1:
+        # here we have no sumprob, so 
+        in_path_sumatra_yr_cum = out_path + "\\Sumatra_"+ forest_layer +"_preddef_i*_yr" + str(year) + ".tif"
+    else:
+        in_path_sumatra_yr_cum = out_path + "\\Sumatra_"+ forest_layer +"_preddef_i*_yr" + str(year) + "cum.tif"
+    preddef_list_yr = glob.glob(in_path_sumatra_yr_cum)
+    # make an empty tif file 
+    sumprob =  np.zeros(shape_out)
+    sumprob_path = out_path + "\\Sumatra_"+ forest_layer +"_yr_"+str(start_sumprob) + "_"+ str(end_sumprob) +  "_sumprob.tif"
+
+        
+    for i in range(0,len(preddef_list_yr)):
+    #for i in range(0,10):
+        print(preddef_list_yr[i])
+        pred_def_i = mp.tif.read(preddef_list_yr[i], 1)
+        sumprob = np.where(pred_def_i == -9999, sumprob, sumprob + pred_def_i)
+    mp.tif.write(out_path + "\\" + "deforestation_2017_21_" + res + "m_repro_res_" +  forest_layer + "_base.tif",
+                sumprob_path,
+                sumprob, nodata = -9999, option='compress=deflate')      
+        

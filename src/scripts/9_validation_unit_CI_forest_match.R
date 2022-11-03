@@ -107,8 +107,8 @@ pdf(file.path(PCVANT_path, "validation/validation_all_forest.pdf"), paper = "a4r
 
 ggplot(data =validation_all, aes(x = as.factor(match_type), y = perc_of_total, colour = as.factor(match_type))) +  # at what are we looking here
   geom_boxplot(size = 1, outlier.size = 2, notchwidth = 0.5)+
-  # xlab("radius in m")+
- #ylab("% match, omission and comission") +
+   xlab("percent of total")+
+   ylab("% match, omission and comission") +
   scale_color_manual(values = c("black", "blue", "green"))+
   facet_wrap(~unit_name_long)+
   scale_y_continuous(limits = c(0, 100),
