@@ -37,10 +37,10 @@ void pause() { PAUSE }
 // Maria - change dimensions of input data
 
 //Jambi
-#define GRIDNX 1995
-#define GRIDNY 1363 // dimensions of grid we are using
-#define XLLCORNER -2550958.004000000190
-#define YLLCORNER  1328049.379999999888 // coerner dimensions
+#define GRIDNX 2337
+#define GRIDNY 2447 // dimensions of grid we are using
+#define XLLCORNER -2699818.004000000190
+#define YLLCORNER  1521909.379999999888 // coerner dimensions
 
 
 #define CELLSIZE 180  //cellsize
@@ -751,8 +751,8 @@ void applyModel(int plookup)
 
 			  //Exporting predicted probabilites to get AUC -- MARIA change xll yll corners
 			//printf("\n Exporting predicted probabilities \n");
-			//sprintf(fname, "M:/Sumatra_model_August22/tmf/Jambi/model_Jambi_D//predprob_yr%d_i%d.asc", n, j);
-			writeAsciiGrid(fname, predprob, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
+			//sprintf(fname, "M:/Sumatra_model_August22/tmf/Jambi/model_Jambi_D/predprob_yr%d_i%d.asc", n, j);
+			//writeAsciiGrid(fname, predprob, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 			printf("\n deforest model, year %d", n);
 
@@ -763,7 +763,7 @@ void applyModel(int plookup)
 			//export the annual forest cover map as an ASCII file
 			//printf("\n Exporting new forest cover map \n");
 			//sprintf(fname, "M:/Sumatra_model_August22/tmf/Jambi/model_Jambi_D/predfor_i%d_%dyr.asc", j, n);
-			writeAsciiGrid(fname, modelForest, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
+			//writeAsciiGrid(fname, modelForest, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 			//export the annual deforestation map as an ASCII file
 			printf("\n Exporting deforestation map for time %d \n", n);
@@ -805,18 +805,18 @@ void applyModel(int plookup)
 		table_writevalue("parameters", "gamlu_4", j, cv("gamma_lu", 4));
 
 		//Export forestdata table
-		sprintf(fname, "M:/Sumatra_model_August22/tmf/Jambi/model_Jambi_D/Model_35yrs_temp.txt");
+		sprintf(fname, "./workspace/Model_35yrs_temp.txt");
 		table_output("forestdata", fname);
 
 	} //End error propagation loop 
 
 	  //EDIT
 	  //Export forestdata table
-	sprintf(fname, "M:/Sumatra_model_August22/tmf/Jambi/model_Jambi_D/Model_35yrs.txt");
+	sprintf(fname, "./workspace/Model_35yrs.txt");
 	table_output("forestdata", fname);
 
 	//Export parameters table 
-	table_output("parameters", "M:/Sumatra_model_August22/tmf/Jambi/model_Jambi_D/Parameters_Values.txt");
+	table_output("parameters", "./workspace/Parameters_Values.txt");
 
 
 	return;
@@ -877,7 +877,7 @@ void setup_model()
 	parameter_create("beta_10", -1.0, 1.0, 0.0, 0, 0, 1);		//distance to non_agri
 	parameter_create("beta_11", -5.0, 2.0, 0.0, 0, 0, 1);		//mpi
 
-	parameter_create_vector("gamma_peat", -3.0, 2.0, 0.0, 0, 0, 1, 1);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
+	parameter_create_vector("gamma_peat", -4.0, 3.0, 0.0, 0, 0, 1, 1);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
 
 	parameter_create_vector("gamma_piaps", -4.0, 2.0, 0.0, 0, 0, 1, 2);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
 
@@ -1066,7 +1066,7 @@ int main()
 
 
 	//if 1 - runs forward stepwise regression
-#if 1
+#if 0
 	//Create "likelihood" table
 	//add 8 columns to store if the parameters if fixed (0) or free (1) in each run of the stepwise regression
 	table_create("model_likelihood");
@@ -1284,7 +1284,7 @@ int main()
 #endif
 
 	//if 1 runs simulations using defined model
-#if 0
+#if 1
 	//read data
 	read_data();
 
@@ -1295,17 +1295,17 @@ int main()
 	tfree[0] = 1; //Deforestation
 	tfree[1] = 1; //slope
 	tfree[2] = 1; //fire
-	tfree[3] = 0; //access_hrs
+	tfree[3] = 1; //access_hrs
 	tfree[4] = 1; //roads
 	tfree[5] = 1; //rivers
-	tfree[6] = 0; //pp1
-	tfree[7] = 0; //dist sustainability
+	tfree[6] = 1; //pp1
+	tfree[7] = 1; //dist sustainability
 	tfree[8] = 1; //dist plantation
 	tfree[9] = 1; //dist non-agri
 	tfree[10] = 0; //mpi
 
 	tfree[11] = 1; //peat
-	tfree[12] = 0; //piaps
+	tfree[12] = 1; //piaps
 	tfree[13] = 1; //mine
 	tfree[14] = 1; //landuse
 

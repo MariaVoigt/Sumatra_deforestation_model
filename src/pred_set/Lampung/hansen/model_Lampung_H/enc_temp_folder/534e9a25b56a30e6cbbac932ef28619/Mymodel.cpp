@@ -36,11 +36,11 @@ void pause() { PAUSE }
 
 // Maria - change dimensions of input data
 
-//Aceh
-#define GRIDNX 2143
-#define GRIDNY 2401 // dimensions of grid we are using
-#define XLLCORNER -3292738.004836000036
-#define YLLCORNER  1824309.389224000275// coerner dimensions
+//Lampung
+#define GRIDNX 1559
+#define GRIDNY 1569 // dimensions of grid we are using
+#define XLLCORNER -2262058.004000000190
+#define YLLCORNER  962109.379999999888 // coerner dimensions
 
 
 #define CELLSIZE 180  //cellsize
@@ -60,7 +60,7 @@ float subsistenceLH[GRIDNX][GRIDNY];			//subsistence_distance_non_forest
 float plantationLH[GRIDNX][GRIDNY];			//plantation_distance_non_forest
 float non_agriLH[GRIDNX][GRIDNY];			//non_agri_distance_non_forest
 float transmigrant[GRIDNX][GRIDNY];	    //LC_transmigrant_distance
-float small_plantations[GRIDNX][GRIDNY];	    //distance to smallscale plantations
+float ind_plantations[GRIDNX][GRIDNY];	    //distance to smallscale plantations
 float mpi[GRIDNX][GRIDNY];	    //mpi poverty economic
 
 float peat[GRIDNX][GRIDNY];			//peat, 2 levels, 0-1
@@ -285,7 +285,7 @@ double get_pdefor(int xx, int yy, int datamod)
 		mybeta_9 * plantationLH[xx][yy] +
 		mybeta_10 * non_agriLH[xx][yy] + 
 		mybeta_11 * transmigrant[xx][yy] +
-		mybeta_12 * small_plantations[xx][yy] +
+		mybeta_12 * ind_plantations[xx][yy] +
 		mybeta_13 * mpi[xx][yy] +
 
 		mygamma_peat * peat[xx][yy] +
@@ -758,9 +758,9 @@ void applyModel(int plookup)
 			  //EDIT
 
 			  //Exporting predicted probabilites to get AUC -- MARIA change xll yll corners
-			printf("\n Exporting predicted probabilities \n");
-			sprintf(fname, "E:/Sumatra_model_August22/tmf/Aceh/model_Aceh_A/predprob_yr%d_i%d.asc", n, j);
-			writeAsciiGrid(fname, predprob, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
+			//printf("\n Exporting predicted probabilities \n");
+			//sprintf(fname, "M:\Sumatra_model_August22\hansen\Lampung\model_Lampung_H/predprob_yr%d_i%d.asc", n, j);
+			//writeAsciiGrid(fname, predprob, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 			printf("\n deforest model, year %d", n);
 
@@ -769,13 +769,13 @@ void applyModel(int plookup)
 
 
 			//export the annual forest cover map as an ASCII file
-			printf("\n Exporting new forest cover map \n");
-			sprintf(fname, "E:/Sumatra_model_August22/tmf/Aceh/model_Aceh_A/predfor_i%d_%dyr.asc", j, n);
-			writeAsciiGrid(fname, modelForest, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
+			//printf("\n Exporting new forest cover map \n");
+			//sprintf(fname, "M:\Sumatra_model_August22\hansen\Lampung\model_Lampung_H/predfor_i%d_%dyr.asc", j, n);
+			//writeAsciiGrid(fname, modelForest, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 			//export the annual deforestation map as an ASCII file
 			printf("\n Exporting deforestation map for time %d \n", n);
-			sprintf(fname, "E:/Sumatra_model_August22/tmf/Aceh/model_Aceh_A/preddef_i%d_%dyr.asc", j, n);
+			sprintf(fname, "M:\Sumatra_model_August22\hansen\Lampung\model_Lampung_H/preddef_i%d_%dyr.asc", j, n);
 			writeAsciiGrid(fname, modelDef, GRIDNX, GRIDNY, XLLCORNER, YLLCORNER, CELLSIZE, -9999.0);
 
 
@@ -839,25 +839,25 @@ void read_data()
 
 	//read various ascii grids with input data
 	//EDIT
-	readAsciiGrid("./workspace/forest_2017_21_180m_repro_res_tmf_Aceh.ascii", forest);		//
-	readAsciiGrid("./workspace/deforestation_2017_21_180m_repro_res_tmf_Aceh.ascii", def);		//
-	readAsciiGrid("./workspace/slope_180m_repro_res_tmf_Aceh.ascii", slope);		//
-	readAsciiGrid("./workspace/fire_yearly_average_180m_repro_res_tmf_Aceh.ascii", fire);		//
-	readAsciiGrid("./workspace/IDN_TTCSM_hrs_180m_repro_res_tmf_Aceh.ascii", access_hrs);		//
-	readAsciiGrid("./workspace/road_distance_180m_repro_res_tmf_Aceh.ascii", roads);		//
-	readAsciiGrid("./workspace/river_distance_180m_repro_res_tmf_Aceh.ascii", rivers);		//
-	readAsciiGrid("./workspace/pressurelog10_sigma1_180m_repro_res_tmf_Aceh.ascii", pp_1);		//
-	readAsciiGrid("./workspace/subsistence_LH_distance_180m_repro_res_tmf_Aceh.ascii", subsistenceLH);		//
-	readAsciiGrid("./workspace/plantation_LH_distance_180m_repro_res_tmf_Aceh.ascii", plantationLH);		//
-	readAsciiGrid("./workspace/non_agri_LH_distance_180m_repro_res_tmf_Aceh.ascii", non_agriLH);		//
-	readAsciiGrid("./workspace/transmigrant_distance_180m_repro_res_tmf_Aceh.ascii", transmigrant);		//
-	readAsciiGrid("./workspace/small_plantations_distance_180m_repro_res_tmf_Aceh.ascii", small_plantations);		//
-	readAsciiGrid("./workspace/soc_econMPI_180m_repro_res_tmf_Aceh.ascii", mpi);		//
+	readAsciiGrid("./workspace/forest_2017_21_180m_repro_res_hansen_Lampung.ascii", forest);		//
+	readAsciiGrid("./workspace/deforestation_2017_21_180m_repro_res_hansen_Lampung.ascii", def);		//
+	readAsciiGrid("./workspace/slope_180m_repro_res_hansen_Lampung.ascii", slope);		//
+	readAsciiGrid("./workspace/fire_yearly_average_180m_repro_res_hansen_Lampung.ascii", fire);		//
+	readAsciiGrid("./workspace/IDN_TTCSM_hrs_180m_repro_res_hansen_Lampung.ascii", access_hrs);		//
+	readAsciiGrid("./workspace/road_distance_180m_repro_res_hansen_Lampung.ascii", roads);		//
+	readAsciiGrid("./workspace/river_distance_180m_repro_res_hansen_Lampung.ascii", rivers);		//
+	readAsciiGrid("./workspace/pressurelog10_sigma1_180m_repro_res_hansen_Lampung.ascii", pp_1);		//
+	readAsciiGrid("./workspace/subsistence_LH_distance_180m_repro_res_hansen_Lampung.ascii", subsistenceLH);		//
+	readAsciiGrid("./workspace/plantation_LH_distance_180m_repro_res_hansen_Lampung.ascii", plantationLH);		//
+	readAsciiGrid("./workspace/non_agri_LH_distance_180m_repro_res_hansen_Lampung.ascii", non_agriLH);		//
+	readAsciiGrid("./workspace/transmigrant_distance_180m_repro_res_hansen_Lampung.ascii", transmigrant);		//
+	readAsciiGrid("./workspace/ind_plantations_distance_180m_repro_res_hansen_Lampung.ascii", ind_plantations);		//
+	readAsciiGrid("./workspace/soc_econMPI_180m_repro_res_hansen_Lampung.ascii", mpi);		//
 
-	readAsciiGrid("./workspace/peat_180m_repro_res_tmf_Aceh.ascii", peat);		//peat
-	readAsciiGrid("./workspace/piaps_180m_repro_res_tmf_Aceh.ascii", piaps);		//
-	readAsciiGrid("./workspace/mining_180m_repro_res_tmf_Aceh.ascii", mining);		//mining
-	readAsciiGrid("./workspace/lu_new_class_180m_repro_res_tmf_Aceh.ascii", landuse);		//landuse
+	readAsciiGrid("./workspace/peat_180m_repro_res_hansen_Lampung.ascii", peat);		//peat
+	readAsciiGrid("./workspace/piaps_180m_repro_res_hansen_Lampung.ascii", piaps);		//
+	readAsciiGrid("./workspace/mining_180m_repro_res_hansen_Lampung.ascii", mining);		//mining
+	readAsciiGrid("./workspace/lu_new_class_180m_repro_res_hansen_Lampung.ascii", landuse);		//landuse
 	return;
 
 }
@@ -878,7 +878,7 @@ void setup_model()
 																			// continuous variables
 	parameter_create("beta_1", -6.0, 8.0, 0.0, 0, 0, 1);		//proportion of deforested neighbours (updated every year, dynamic variable)
 	parameter_create("beta_2", -1.0000, 0.0001, 0.0, 0, 0, 1);		//slope
-	parameter_create("beta_3", -2.0, 8.0, 0.0, 0, 0, 1);		//fire
+	parameter_create("beta_3", -2.0, 25.0, 0.0, 0, 0, 1);		//fire
 	parameter_create("beta_4", -2.0, 2.0, 0.0, 0, 0, 1);		//access_hrs
 	parameter_create("beta_5", -1.0, 1.0, 0.0, 0, 0, 1);		//roads
 	parameter_create("beta_6", -1.0, 1.0, 0.0, 0, 0, 1);		//rivers
@@ -888,13 +888,13 @@ void setup_model()
 	parameter_create("beta_10", -1.0, 1.0, 0.0, 0, 0, 1);		//distance to non_agri
 	parameter_create("beta_11", -1.0, 1.0, 0.0, 0, 0, 1);		//transmigrant
 	parameter_create("beta_12", -2.0, 2.0, 0.0, 0, 0, 1);		//distance small scale
-	parameter_create("beta_13", -2.0, 2.0, 0.0, 0, 0, 1);		//mpi
+	parameter_create("beta_13", -10.0, 2.0, 0.0, 0, 0, 1);		//mpi
 
-	parameter_create_vector("gamma_peat", -3.0, 2.0, 0.0, 0, 0, 1, 1);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
+	parameter_create_vector("gamma_peat", -2.0, 10.0, 0.0, 0, 0, 1, 1);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
 
 	parameter_create_vector("gamma_piaps", -4.0, 2.0, 0.0, 0, 0, 1, 2);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
 
-	parameter_create_vector("gamma_mine", -2.0, 2.0, 0.0, 0, 0, 1, 2);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
+	parameter_create_vector("gamma_mine", -7.0, 2.0, 0.0, 0, 0, 1, 2);// // last digit is 1+ the last element in get_params, to allow a parameter value for each class (excluding zero!)
 
 	parameter_create_vector("gamma_lu", -6.0, 4.0, 0.0, 0, 0, 1, 5);// EDIT
 
@@ -1188,7 +1188,7 @@ int main()
 				initialize_filzbach();
 				beta0_global = 1;
 				setup_model();
-				sprintf(aname, "´Aceh_1_%d", rr);
+				sprintf(aname, "´Lampung_1_%d", rr);
 				name_analysis(aname);					//This gives a name to the analysis. All the outputs will have this extension.
 				set_chains(1);
 
@@ -1317,24 +1317,24 @@ int main()
 	tfree[0] = 1; //Deforestation
 	tfree[1] = 1; //slope
 	tfree[2] = 1; //fire
-	tfree[3] = 0; //access_hrs
-	tfree[4] = 1; //roads
+	tfree[3] = 1; //access_hrs
+	tfree[4] = 0; //roads
 	tfree[5] = 1; //rivers
 	tfree[6] = 0; //pp1
-	tfree[7] = 0; //dist sustainability
+	tfree[7] = 1; //dist sustainability
 	tfree[8] = 1; //dist plantation
 	tfree[9] = 1; //dist non-agri
 	tfree[10] = 1; //transmigrant
-	tfree[11] = 1; //dist small scale plant
+	tfree[11] = 0; //dist small scale plant
 	tfree[12] = 0; //mpi
 
 	tfree[13] = 1; //peat
-	tfree[14] = 0; //piaps
-	tfree[15] = 1; //mine
+	tfree[14] = 1; //piaps
+	tfree[15] = 0; //mine
 	tfree[16] = 1; //landuse
 
 	setup_model();
-	name_analysis("Aceh_model");
+	name_analysis("Lampung_model");
 	set_chains(1);
 
 	//tell likelihood to use training data

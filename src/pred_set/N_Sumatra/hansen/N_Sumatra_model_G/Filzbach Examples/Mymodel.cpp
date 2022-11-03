@@ -1071,7 +1071,7 @@ int main()
 
 
 	//if 1 - runs forward stepwise regression
-#if 1
+#if 0
 	//Create "likelihood" table
 	//add 8 columns to store if the parameters if fixed (0) or free (1) in each run of the stepwise regression
 	table_create("model_likelihood");
@@ -1238,6 +1238,9 @@ int main()
 
 				table_writevalue("model_likelihood", "gamma_0peat", rr, cv("gamma_peat", 0));
 
+				table_writevalue("model_likelihood", "gamma_0piaps", rr, cv("gamma_piaps", 0));
+				table_writevalue("model_likelihood", "gamma_1piaps", rr, cv("gamma_piaps", 1));
+
 				table_writevalue("model_likelihood", "gamma_0mine", rr, cv("gamma_mine", 0));
 				table_writevalue("model_likelihood", "gamma_1mine", rr, cv("gamma_mine", 1));
 
@@ -1287,7 +1290,7 @@ int main()
 #endif
 
 	//if 1 runs simulations using defined model
-#if 0
+#if 1
 	//read data
 	read_data();
 
@@ -1298,18 +1301,18 @@ int main()
 	tfree[0] = 1; //Deforestation
 	tfree[1] = 1; //slope
 	tfree[2] = 1; //fire
-	tfree[3] = 0; //access_hrs
+	tfree[3] = 1; //access_hrs
 	tfree[4] = 1; //roads
 	tfree[5] = 1; //rivers
-	tfree[6] = 0; //pp1
-	tfree[7] = 0; //dist sustainability
+	tfree[6] = 1; //pp1
+	tfree[7] = 1; //dist sustainability
 	tfree[8] = 1; //dist plantation
 	tfree[9] = 1; //dist non-agri
-	tfree[10] = 1; //transmigrant
-	tfree[11] = 0; //mpi
+	tfree[10] = 0; //transmigrant
+	tfree[11] = 1; //mpi
 
 	tfree[12] = 1; //peat
-	tfree[13] = 0; //piaps
+	tfree[13] = 1; //piaps
 	tfree[14] = 1; //mine
 	tfree[15] = 1; //landuse
 
