@@ -12,7 +12,6 @@ join the deforestation maps from each province
 import numpy as np
 import os
 
-import macpyver as mp
 
 km2_ha = 100
 
